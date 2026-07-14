@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   Check,
+  Clapperboard,
   Download,
   FlipHorizontal2,
   Maximize2,
@@ -11,18 +12,20 @@ import {
   Pencil,
   Play,
   Settings,
+  Square,
   SwitchCamera,
+  X,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useCountdown } from "@/hooks/use-countdown";
 import { useFullscreen } from "@/hooks/use-fullscreen";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import {
   CameraPreview,
   CaptureSettingsSheet,
   DEFAULT_CAPTURE_SETTINGS,
-  RecordButton,
   formatDuration,
   useCamera,
   useMediaDevices,
@@ -70,6 +73,53 @@ function StageButton({
   );
 }
 
+/** Action principale : Tourner → (décompte) → Annuler → Arrêter. */
+function RollButton({
+  state,
+  disabled,
+  onRoll,
+  onCancel,
+  onStop,
+}: {
+  state: "idle" | "counting" | "rolling";
+  disabled?: boolean;
+  onRoll: () => void;
+  onCancel: () => void;
+  onStop: () => void;
+}) {
+  if (state === "counting") {
+    return (
+      <Button type="button" variant="secondary" onClick={onCancel} className="gap-2">
+        <X className="size-4" />
+        Annuler
+      </Button>
+    );
+  }
+  if (state === "rolling") {
+    return (
+      <Button
+        type="button"
+        onClick={onStop}
+        className="gap-2 bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600/40"
+      >
+        <Square className="size-3.5 fill-current" />
+        Arrêter
+      </Button>
+    );
+  }
+  return (
+    <Button
+      type="button"
+      onClick={onRoll}
+      disabled={disabled}
+      className="gap-2 bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600/40"
+    >
+      <Clapperboard className="size-4" />
+      Tourner
+    </Button>
+  );
+}
+
 /**
  * Écran principal de PrompteurFlow.
  *
@@ -98,6 +148,7 @@ export function Studio() {
   });
   const prompter = useTeleprompter();
   const { ref: containerRef, isFullscreen, toggle: toggleFullscreen } = useFullscreen<HTMLDivElement>();
+  const countdown = useCountdown();
 
   // Rafraîchit la liste des périphériques une fois la permission accordée
   // (les labels ne sont renseignés qu'à ce moment-là).
@@ -131,9 +182,37 @@ export function Studio() {
 
   const isRecording = recorder.status !== "idle";
   const hasClip = Boolean(recorder.recordingUrl) && !isRecording;
+  const rollState = countdown.isCounting ? "counting" : isRecording ? "rolling" : "idle";
 
   const handleTextChange = (value: string) => {
     if (currentScript) scriptsState.updateContent(currentScript.id, value);
+  };
+
+  // « Tourner » : décompte, puis enregistrement + défilement synchronisés.
+  const handleRoll = () => {
+    setEditing(false);
+    prompter.stop(); // repart du début du script
+    countdown.start(3, () => {
+      recorder.start();
+      prompter.play();
+    });
+  };
+
+  const handleStopRoll = () => {
+    countdown.cancel();
+    recorder.stop();
+    prompter.stop();
+  };
+
+  // Pause pendant le tournage : suspend enregistrement ET défilement ensemble.
+  const handleTogglePauseRoll = () => {
+    if (recorder.status === "recording") {
+      recorder.pause();
+      prompter.pause();
+    } else if (recorder.status === "paused") {
+      recorder.resume();
+      prompter.play();
+    }
   };
 
   return (
@@ -159,7 +238,7 @@ export function Studio() {
           editing={editing}
         />
 
-        {!isRecording && (
+        {!isRecording && !countdown.isCounting && (
           <button
             type="button"
             onClick={toggleEditing}
@@ -204,6 +283,17 @@ export function Studio() {
             {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
           </StageButton>
         </div>
+
+        {countdown.count !== null && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <span
+              key={countdown.count}
+              className="animate-in zoom-in-50 fade-in text-[7rem] font-bold tabular-nums text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)] duration-300"
+            >
+              {countdown.count}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Barre de contrôles — en bas (portrait), sur le côté droit (paysage court) */}
@@ -227,26 +317,19 @@ export function Studio() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <RecordButton
-                status={recorder.status}
-                elapsed={recorder.elapsed}
+              <RollButton
+                state={rollState}
                 disabled={!camera.stream || !recorder.isSupported}
-                onStart={() => {
-                  setEditing(false);
-                  recorder.start();
-                }}
-                onStop={recorder.stop}
+                onRoll={handleRoll}
+                onCancel={countdown.cancel}
+                onStop={handleStopRoll}
               />
-              {isRecording && (
+              {rollState === "rolling" && (
                 <Button
                   size="icon"
                   variant="secondary"
-                  onClick={recorder.status === "recording" ? recorder.pause : recorder.resume}
-                  aria-label={
-                    recorder.status === "recording"
-                      ? "Suspendre l'enregistrement"
-                      : "Reprendre l'enregistrement"
-                  }
+                  onClick={handleTogglePauseRoll}
+                  aria-label={recorder.status === "recording" ? "Suspendre" : "Reprendre"}
                 >
                   {recorder.status === "recording" ? (
                     <Pause className="size-4" />
@@ -279,6 +362,7 @@ export function Studio() {
             onSpeedChange={prompter.setSpeed}
             fontSize={prompter.fontSize}
             onFontSizeChange={prompter.setFontSize}
+            disabled={rollState !== "idle"}
           />
         </div>
       </div>

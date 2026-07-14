@@ -17,6 +17,8 @@ interface TeleprompterControlsProps {
   onSpeedChange: (value: number) => void;
   fontSize: number;
   onFontSizeChange: (value: number) => void;
+  /** Désactive Lecture/Pause/Stop (ex. pendant un tournage piloté par « Tourner »). */
+  disabled?: boolean;
 }
 
 /**
@@ -33,18 +35,24 @@ export function TeleprompterControls({
   onSpeedChange,
   fontSize,
   onFontSizeChange,
+  disabled,
 }: TeleprompterControlsProps) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
       <div className="flex items-center justify-center gap-2">
-        <Button size="icon" onClick={onPlay} disabled={isPlaying} aria-label="Lecture">
+        <Button
+          size="icon"
+          onClick={onPlay}
+          disabled={isPlaying || disabled}
+          aria-label="Lecture"
+        >
           <Play className="size-4" />
         </Button>
         <Button
           size="icon"
           variant="secondary"
           onClick={onPause}
-          disabled={!isPlaying}
+          disabled={!isPlaying || disabled}
           aria-label="Pause"
         >
           <Pause className="size-4" />
@@ -53,7 +61,7 @@ export function TeleprompterControls({
           size="icon"
           variant="outline"
           onClick={onStop}
-          disabled={status === "idle"}
+          disabled={status === "idle" || disabled}
           aria-label="Stop"
         >
           <Square className="size-4" />
