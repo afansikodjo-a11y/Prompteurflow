@@ -33,7 +33,7 @@
     "tailwind-merge": "^3.6.0"
   },
   "engines": {
-    "node": ">=18.18.0"
+    "node": "22.x"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.6",
