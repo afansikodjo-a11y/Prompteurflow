@@ -3,6 +3,9 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Téléphone en paysage (viewport court et large) — pas les grands écrans. */
+@custom-variant short-landscape (@media (orientation: landscape) and (max-height: 640px));
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

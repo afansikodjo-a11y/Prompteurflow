@@ -139,7 +139,7 @@ export function Studio() {
   return (
     <div
       ref={containerRef}
-      className="bg-background flex h-[calc(100dvh-3.5rem)] flex-col [&:fullscreen]:h-dvh"
+      className="bg-background flex h-[calc(100dvh-3.5rem)] flex-col [&:fullscreen]:h-dvh short-landscape:flex-row"
     >
       {/* Scène : aperçu caméra + texte en overlay */}
       <div className="relative flex-1 overflow-hidden bg-neutral-950">
@@ -206,8 +206,8 @@ export function Studio() {
         </div>
       </div>
 
-      {/* Barre de contrôles */}
-      <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 shrink-0 border-t backdrop-blur">
+      {/* Barre de contrôles — en bas (portrait), sur le côté droit (paysage court) */}
+      <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 shrink-0 border-t backdrop-blur short-landscape:w-80 short-landscape:overflow-y-auto short-landscape:border-t-0 short-landscape:border-l">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
