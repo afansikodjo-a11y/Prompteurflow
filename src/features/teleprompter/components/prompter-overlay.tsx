@@ -14,6 +14,8 @@ interface PrompterOverlayProps {
   readOnly?: boolean;
   /** Retourne le texte horizontalement (prompteur à vitre / beam-splitter). */
   mirrored?: boolean;
+  /** Mode édition : fond plein + texte aligné à gauche pour une saisie confortable. */
+  editing?: boolean;
   /** Ref vers la zone défilante (fournie par `useTeleprompter`). */
   ref?: React.Ref<HTMLTextAreaElement>;
   className?: string;
@@ -34,13 +36,19 @@ export function PrompterOverlay({
   fontSize,
   readOnly,
   mirrored,
+  editing,
   ref,
   className,
 }: PrompterOverlayProps) {
   return (
     <div className={cn("pointer-events-none absolute inset-0", className)}>
-      {/* Voile dégradé pour la lisibilité du texte sur la vidéo. */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/60" />
+      {/* Voile : plein en édition (lisibilité au clavier), dégradé en lecture. */}
+      <div
+        className={cn(
+          "absolute inset-0",
+          editing ? "bg-black/85" : "bg-gradient-to-b from-black/50 via-black/20 to-black/60",
+        )}
+      />
 
       <Textarea
         ref={ref}
@@ -52,10 +60,11 @@ export function PrompterOverlay({
         placeholder="Écrivez ou collez votre texte ici…"
         style={{ fontSize, lineHeight: 1.5 }}
         className={cn(
-          "pointer-events-auto relative z-10 h-full w-full resize-none rounded-none border-0 bg-transparent px-6 text-center font-semibold tracking-tight text-white shadow-none outline-none md:px-16",
-          "py-[50vh] placeholder:text-white/50 focus-visible:ring-0",
+          "pointer-events-auto relative z-10 h-full w-full resize-none rounded-none border-0 bg-transparent px-6 font-semibold tracking-tight text-white shadow-none outline-none md:px-16",
+          "placeholder:text-white/50 focus-visible:ring-0",
           "[text-shadow:0_2px_12px_rgba(0,0,0,0.7)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-          mirrored && "-scale-x-100",
+          editing ? "py-8 text-left" : "py-[50vh] text-center",
+          mirrored && !editing && "-scale-x-100",
         )}
       />
     </div>

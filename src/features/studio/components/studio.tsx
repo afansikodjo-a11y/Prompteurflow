@@ -2,11 +2,13 @@
 
 import * as React from "react";
 import {
+  Check,
   Download,
   FlipHorizontal2,
   Maximize2,
   Minimize2,
   Pause,
+  Pencil,
   Play,
   Settings,
   SwitchCamera,
@@ -87,6 +89,7 @@ export function Studio() {
     DEFAULT_CAPTURE_SETTINGS,
   );
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [editing, setEditing] = React.useState(false);
   const { cameras, microphones, refresh: refreshDevices } = useMediaDevices();
   const camera = useCamera(capture);
   const recordings = useRecordings();
@@ -109,6 +112,13 @@ export function Studio() {
       videoDeviceId: undefined,
     }));
   }, [setCapture]);
+
+  const toggleEditing = () => {
+    setEditing((value) => {
+      if (!value) prompter.stop(); // entrer en édition arrête tout défilement
+      return !value;
+    });
+  };
 
   usePlaybackShortcuts({
     isPlaying: prompter.isPlaying,
@@ -144,9 +154,21 @@ export function Studio() {
           value={currentScript?.content ?? ""}
           onChange={handleTextChange}
           fontSize={prompter.fontSize}
-          readOnly={prompter.status !== "idle" || !currentScript}
+          readOnly={!editing || !currentScript}
           mirrored={mirrored}
+          editing={editing}
         />
+
+        {!isRecording && (
+          <button
+            type="button"
+            onClick={toggleEditing}
+            className="absolute top-3 left-3 z-20 inline-flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-medium text-white backdrop-blur transition-colors hover:bg-black/70"
+          >
+            {editing ? <Check className="size-3.5" /> : <Pencil className="size-3.5" />}
+            {editing ? "Terminé" : "Éditer"}
+          </button>
+        )}
 
         {isRecording && (
           <div className="absolute top-3 left-3 z-20 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white backdrop-blur">
@@ -209,7 +231,10 @@ export function Studio() {
                 status={recorder.status}
                 elapsed={recorder.elapsed}
                 disabled={!camera.stream || !recorder.isSupported}
-                onStart={recorder.start}
+                onStart={() => {
+                  setEditing(false);
+                  recorder.start();
+                }}
                 onStop={recorder.stop}
               />
               {isRecording && (
@@ -244,7 +269,10 @@ export function Studio() {
           <TeleprompterControls
             status={prompter.status}
             isPlaying={prompter.isPlaying}
-            onPlay={prompter.play}
+            onPlay={() => {
+              setEditing(false);
+              prompter.play();
+            }}
             onPause={prompter.pause}
             onStop={prompter.stop}
             speed={prompter.speed}
