@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="PrompteurFlow">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1" />
+      <stop offset="1" stop-color="#8b5cf6" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#g)" />
+  <path d="M256 128l24.7 66.6L347 219l-66.3 24.4L256 310l-24.7-66.6L165 219l66.3-24.4z" fill="#ffffff" />
+  <circle cx="360" cy="352" r="26" fill="#ffffff" opacity="0.9" />
+  <circle cx="160" cy="360" r="18" fill="#ffffff" opacity="0.75" />
+</svg>

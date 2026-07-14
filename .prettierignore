@@ -1,0 +1,20 @@
+# Dépendances
+node_modules
+
+# Build Next.js
+.next
+out
+build
+
+# PWA (généré)
+public/sw.js
+public/swe-worker-*.js
+public/workbox-*.js
+
+# Divers
+*.lock
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+.DS_Store
+coverage
