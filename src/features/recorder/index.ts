@@ -8,6 +8,7 @@ export { useFilteredStream } from "./hooks/use-filtered-stream";
 export { CameraPreview } from "./components/camera-preview";
 export { RecordButton } from "./components/record-button";
 export { CaptureSettingsSheet } from "./components/capture-settings-sheet";
+export { FilterStrip } from "./components/filter-strip";
 export { formatDuration } from "./utils";
 export { DEFAULT_CAPTURE_SETTINGS, DEFAULT_VIDEO_FILTER } from "./constants";
 export type {

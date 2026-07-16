@@ -27,6 +27,7 @@ import {
   CaptureSettingsSheet,
   DEFAULT_CAPTURE_SETTINGS,
   DEFAULT_VIDEO_FILTER,
+  FilterStrip,
   formatDuration,
   useCamera,
   useFilteredStream,
@@ -294,6 +295,14 @@ export function Studio() {
           </StageButton>
         </div>
 
+        {!isRecording && !countdown.isCounting && (
+          <FilterStrip
+            value={filter}
+            onChange={setFilter}
+            className="absolute top-14 inset-x-3 z-20"
+          />
+        )}
+
         {countdown.count !== null && (
           <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-sm">
             <span
@@ -384,8 +393,6 @@ export function Studio() {
         microphones={microphones}
         settings={capture}
         onSettingsChange={setCapture}
-        filter={filter}
-        onFilterChange={setFilter}
         disabled={isRecording}
       />
     </div>

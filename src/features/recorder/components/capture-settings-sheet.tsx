@@ -16,8 +16,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { CAPTURE_AUTO, FILTER_PRESETS, RESOLUTION_PRESETS } from "../constants";
-import type { CaptureSettings, ResolutionPreset, VideoFilterId } from "../types";
+import { CAPTURE_AUTO, RESOLUTION_PRESETS } from "../constants";
+import type { CaptureSettings, ResolutionPreset } from "../types";
 
 interface CaptureSettingsSheetProps {
   open: boolean;
@@ -26,8 +26,6 @@ interface CaptureSettingsSheetProps {
   microphones: MediaDeviceInfo[];
   settings: CaptureSettings;
   onSettingsChange: (settings: CaptureSettings) => void;
-  filter: VideoFilterId;
-  onFilterChange: (filter: VideoFilterId) => void;
   /** Désactive les réglages (ex. pendant l'enregistrement). */
   disabled?: boolean;
 }
@@ -52,12 +50,9 @@ export function CaptureSettingsSheet({
   microphones,
   settings,
   onSettingsChange,
-  filter,
-  onFilterChange,
   disabled,
 }: CaptureSettingsSheetProps) {
   const resolutions = Object.keys(RESOLUTION_PRESETS) as ResolutionPreset[];
-  const filters = Object.keys(FILTER_PRESETS) as VideoFilterId[];
   const availableCameras = cameras.filter((device) => device.deviceId);
   const availableMics = microphones.filter((device) => device.deviceId);
 
@@ -141,21 +136,6 @@ export function CaptureSettingsSheet({
                 {resolutions.map((key) => (
                   <SelectItem key={key} value={key}>
                     {RESOLUTION_PRESETS[key].label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-
-          <Field label="Filtre vidéo">
-            <Select disabled={disabled} value={filter} onValueChange={(value) => onFilterChange(value as VideoFilterId)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {filters.map((key) => (
-                  <SelectItem key={key} value={key}>
-                    {FILTER_PRESETS[key].label}
                   </SelectItem>
                 ))}
               </SelectContent>
