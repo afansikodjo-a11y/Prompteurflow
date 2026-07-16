@@ -50,8 +50,12 @@ function buildConstraints(settings: CaptureSettings): MediaStreamConstraints {
  * Le hook est « contrôlé » : il ne détient aucun réglage propre. À chaque
  * changement de `settings` (caméra, micro, résolution, sens), le flux est
  * recréé ; les pistes sont libérées au démontage et entre deux flux.
+ *
+ * `enabled` permet de couper la caméra sans démonter le composant (ex. mode
+ * lecture plein écran sans caméra) : le matériel est réellement libéré, pas
+ * seulement masqué à l'écran.
  */
-export function useCamera(settings: CaptureSettings): UseCameraResult {
+export function useCamera(settings: CaptureSettings, enabled = true): UseCameraResult {
   const [stream, setStream] = React.useState<MediaStream | null>(null);
   const [status, setStatus] = React.useState<CameraStatus>("idle");
   const [error, setError] = React.useState<string | null>(null);
@@ -61,6 +65,7 @@ export function useCamera(settings: CaptureSettings): UseCameraResult {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     setStream(null);
+    setStatus("idle");
   }, []);
 
   const start = React.useCallback(async () => {
@@ -101,9 +106,13 @@ export function useCamera(settings: CaptureSettings): UseCameraResult {
   }, [settings]);
 
   React.useEffect(() => {
+    if (!enabled) {
+      stop();
+      return;
+    }
     void start();
     return () => stop();
-  }, [start, stop]);
+  }, [enabled, start, stop]);
 
   return { stream, status, error, start, stop };
 }

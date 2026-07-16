@@ -14,6 +14,8 @@ import {
   Settings,
   Square,
   SwitchCamera,
+  Video,
+  VideoOff,
   X,
 } from "lucide-react";
 
@@ -52,11 +54,13 @@ function StageButton({
   onClick,
   label,
   active,
+  disabled,
   children,
 }: {
   onClick: () => void;
   label: string;
   active?: boolean;
+  disabled?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -65,6 +69,7 @@ function StageButton({
       variant="ghost"
       size="icon"
       onClick={onClick}
+      disabled={disabled}
       aria-label={label}
       aria-pressed={active}
       className={cn(
@@ -146,10 +151,13 @@ export function Studio() {
     "prompteurflow:filter",
     DEFAULT_VIDEO_FILTER,
   );
+  // Éteinte, la caméra (et le micro) est réellement libérée côté matériel —
+  // pas juste masquée — pour une lecture plein écran fond noir sans caméra.
+  const [cameraEnabled, setCameraEnabled] = useLocalStorage("prompteurflow:camera-enabled", true);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [editing, setEditing] = React.useState(false);
   const { cameras, microphones, refresh: refreshDevices } = useMediaDevices();
-  const camera = useCamera(capture);
+  const camera = useCamera(capture, cameraEnabled);
   // Le filtre est gravé dans les pixels ici, en amont de l'aperçu ET de
   // l'enregistrement, pour que les deux montrent/capturent le même rendu.
   const filteredStream = useFilteredStream(camera.stream, filter);
@@ -233,12 +241,14 @@ export function Studio() {
     >
       {/* Scène : aperçu caméra + texte en overlay */}
       <div className="relative flex-1 overflow-hidden bg-neutral-950">
-        <CameraPreview
-          stream={filteredStream}
-          status={camera.status}
-          mirrored={capture.facingMode === "user"}
-          onRetry={camera.start}
-        />
+        {cameraEnabled && (
+          <CameraPreview
+            stream={filteredStream}
+            status={camera.status}
+            mirrored={capture.facingMode === "user"}
+            onRetry={camera.start}
+          />
+        )}
         <PrompterOverlay
           ref={prompter.scrollRef}
           value={currentScript?.content ?? ""}
@@ -275,18 +285,30 @@ export function Studio() {
 
         <div className="absolute top-3 right-3 z-20 flex gap-2">
           <StageButton
+            onClick={() => setCameraEnabled((value) => !value)}
+            label={cameraEnabled ? "Éteindre la caméra" : "Activer la caméra"}
+            active={!cameraEnabled}
+            disabled={isRecording}
+          >
+            {cameraEnabled ? <Video className="size-4" /> : <VideoOff className="size-4" />}
+          </StageButton>
+          <StageButton
             onClick={() => setMirrored((value) => !value)}
             label="Mode miroir"
             active={mirrored}
           >
             <FlipHorizontal2 className="size-4" />
           </StageButton>
-          <StageButton onClick={handleSwitchCamera} label="Changer de caméra">
-            <SwitchCamera className="size-4" />
-          </StageButton>
-          <StageButton onClick={() => setSettingsOpen(true)} label="Réglages de capture">
-            <Settings className="size-4" />
-          </StageButton>
+          {cameraEnabled && (
+            <>
+              <StageButton onClick={handleSwitchCamera} label="Changer de caméra">
+                <SwitchCamera className="size-4" />
+              </StageButton>
+              <StageButton onClick={() => setSettingsOpen(true)} label="Réglages de capture">
+                <Settings className="size-4" />
+              </StageButton>
+            </>
+          )}
           <StageButton
             onClick={() => void toggleFullscreen()}
             label={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
@@ -295,7 +317,7 @@ export function Studio() {
           </StageButton>
         </div>
 
-        {!isRecording && !countdown.isCounting && (
+        {cameraEnabled && !isRecording && !countdown.isCounting && (
           <FilterStrip
             value={filter}
             onChange={setFilter}
@@ -335,37 +357,39 @@ export function Studio() {
                 onRemove={recordings.remove}
               />
             </div>
-            <div className="flex items-center gap-2">
-              <RollButton
-                state={rollState}
-                disabled={!filteredStream || !recorder.isSupported}
-                onRoll={handleRoll}
-                onCancel={countdown.cancel}
-                onStop={handleStopRoll}
-              />
-              {rollState === "rolling" && (
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  onClick={handleTogglePauseRoll}
-                  aria-label={recorder.status === "recording" ? "Suspendre" : "Reprendre"}
-                >
-                  {recorder.status === "recording" ? (
-                    <Pause className="size-4" />
-                  ) : (
-                    <Play className="size-4" />
-                  )}
-                </Button>
-              )}
-              {hasClip && recorder.recordingUrl && (
-                <Button asChild variant="outline">
-                  <a href={recorder.recordingUrl} download={`prompteurflow-${Date.now()}.webm`}>
-                    <Download className="size-4" />
-                    Télécharger
-                  </a>
-                </Button>
-              )}
-            </div>
+            {cameraEnabled && (
+              <div className="flex items-center gap-2">
+                <RollButton
+                  state={rollState}
+                  disabled={!filteredStream || !recorder.isSupported}
+                  onRoll={handleRoll}
+                  onCancel={countdown.cancel}
+                  onStop={handleStopRoll}
+                />
+                {rollState === "rolling" && (
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    onClick={handleTogglePauseRoll}
+                    aria-label={recorder.status === "recording" ? "Suspendre" : "Reprendre"}
+                  >
+                    {recorder.status === "recording" ? (
+                      <Pause className="size-4" />
+                    ) : (
+                      <Play className="size-4" />
+                    )}
+                  </Button>
+                )}
+                {hasClip && recorder.recordingUrl && (
+                  <Button asChild variant="outline">
+                    <a href={recorder.recordingUrl} download={`prompteurflow-${Date.now()}.webm`}>
+                      <Download className="size-4" />
+                      Télécharger
+                    </a>
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           <TeleprompterControls
