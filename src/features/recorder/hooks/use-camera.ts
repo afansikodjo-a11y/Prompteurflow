@@ -30,9 +30,16 @@ function buildConstraints(settings: CaptureSettings): MediaStreamConstraints {
     video.facingMode = settings.facingMode;
   }
 
-  const audio: MediaTrackConstraints | boolean = settings.audioDeviceId
-    ? { deviceId: { exact: settings.audioDeviceId } }
-    : true;
+  // Le navigateur active par défaut le pipeline de traitement vocal
+  // (echoCancellation/noiseSuppression/autoGainControl) prévu pour les appels
+  // WebRTC : il normalise et atténue fortement le niveau capté par rapport à
+  // l'appli caméra native. On le désactive pour un volume proche du brut.
+  const audio: MediaTrackConstraints = {
+    echoCancellation: false,
+    noiseSuppression: false,
+    autoGainControl: false,
+    ...(settings.audioDeviceId ? { deviceId: { exact: settings.audioDeviceId } } : {}),
+  };
 
   return { video, audio };
 }

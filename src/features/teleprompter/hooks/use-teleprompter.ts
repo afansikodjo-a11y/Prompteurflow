@@ -54,6 +54,8 @@ export function useTeleprompter(): UseTeleprompterResult {
   const lastTimeRef = React.useRef<number | null>(null);
   const speedRef = React.useRef(speed);
   const pxPerWordRef = React.useRef(0);
+  /** Progression de lecture (0-1), maintenue à jour pendant le défilement. */
+  const scrollFractionRef = React.useRef(0);
 
   React.useEffect(() => {
     speedRef.current = speed;
@@ -79,6 +81,18 @@ export function useTeleprompter(): UseTeleprompterResult {
     return () => window.removeEventListener("resize", measure);
   }, [status, fontSize, measure]);
 
+  // Changer la taille de police modifie la hauteur totale du texte : le
+  // navigateur borne alors `scrollTop` à la volée sur le nouveau maximum, ce
+  // qui peut déclencher à tort la détection de fin de texte au frame suivant
+  // (et mettre en pause). On restaure la même progression (%) juste après le
+  // reflow, avant que ce faux positif ne soit évalué.
+  React.useLayoutEffect(() => {
+    const element = scrollRef.current;
+    if (!element) return;
+    const maxScroll = element.scrollHeight - element.clientHeight;
+    element.scrollTop = maxScroll > 0 ? scrollFractionRef.current * maxScroll : 0;
+  }, [fontSize]);
+
   React.useEffect(() => {
     if (status !== "playing") return;
 
@@ -93,6 +107,9 @@ export function useTeleprompter(): UseTeleprompterResult {
         const deltaSeconds = (time - lastTimeRef.current) / 1000;
         const pixelsPerSecond = (speedRef.current / 60) * pxPerWordRef.current;
         element.scrollTop += pixelsPerSecond * deltaSeconds;
+
+        const maxScroll = element.scrollHeight - element.clientHeight;
+        scrollFractionRef.current = maxScroll > 0 ? element.scrollTop / maxScroll : 0;
 
         // Fin du texte atteinte : on met en pause à la dernière ligne.
         if (element.scrollTop + element.clientHeight >= element.scrollHeight - 1) {
@@ -122,6 +139,7 @@ export function useTeleprompter(): UseTeleprompterResult {
   const pause = React.useCallback(() => setStatus("paused"), []);
   const stop = React.useCallback(() => {
     setStatus("idle");
+    scrollFractionRef.current = 0;
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, []);
 
