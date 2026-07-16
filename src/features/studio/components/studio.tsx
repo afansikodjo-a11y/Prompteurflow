@@ -26,11 +26,14 @@ import {
   CameraPreview,
   CaptureSettingsSheet,
   DEFAULT_CAPTURE_SETTINGS,
+  DEFAULT_VIDEO_FILTER,
   formatDuration,
   useCamera,
+  useFilteredStream,
   useMediaDevices,
   useRecorder,
   type CaptureSettings,
+  type VideoFilterId,
 } from "@/features/recorder";
 import { RecordingsLibrary, useRecordings } from "@/features/recordings";
 import { ScriptsLibrary, useScripts } from "@/features/scripts";
@@ -138,12 +141,19 @@ export function Studio() {
     "prompteurflow:capture",
     DEFAULT_CAPTURE_SETTINGS,
   );
+  const [filter, setFilter] = useLocalStorage<VideoFilterId>(
+    "prompteurflow:filter",
+    DEFAULT_VIDEO_FILTER,
+  );
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [editing, setEditing] = React.useState(false);
   const { cameras, microphones, refresh: refreshDevices } = useMediaDevices();
   const camera = useCamera(capture);
+  // Le filtre est gravé dans les pixels ici, en amont de l'aperçu ET de
+  // l'enregistrement, pour que les deux montrent/capturent le même rendu.
+  const filteredStream = useFilteredStream(camera.stream, filter);
   const recordings = useRecordings();
-  const recorder = useRecorder(camera.stream, {
+  const recorder = useRecorder(filteredStream, {
     onComplete: (blob, durationSec) => void recordings.add(blob, durationSec),
   });
   const prompter = useTeleprompter();
@@ -223,7 +233,7 @@ export function Studio() {
       {/* Scène : aperçu caméra + texte en overlay */}
       <div className="relative flex-1 overflow-hidden bg-neutral-950">
         <CameraPreview
-          stream={camera.stream}
+          stream={filteredStream}
           status={camera.status}
           mirrored={capture.facingMode === "user"}
           onRetry={camera.start}
@@ -319,7 +329,7 @@ export function Studio() {
             <div className="flex items-center gap-2">
               <RollButton
                 state={rollState}
-                disabled={!camera.stream || !recorder.isSupported}
+                disabled={!filteredStream || !recorder.isSupported}
                 onRoll={handleRoll}
                 onCancel={countdown.cancel}
                 onStop={handleStopRoll}
@@ -374,6 +384,8 @@ export function Studio() {
         microphones={microphones}
         settings={capture}
         onSettingsChange={setCapture}
+        filter={filter}
+        onFilterChange={setFilter}
         disabled={isRecording}
       />
     </div>

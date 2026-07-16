@@ -1,4 +1,4 @@
-import type { CaptureSettings, FacingMode, ResolutionPreset } from "./types";
+import type { CaptureSettings, FacingMode, ResolutionPreset, VideoFilterId } from "./types";
 
 /** Caméra utilisée par défaut : frontale (cas d'usage « talking head »). */
 export const DEFAULT_FACING_MODE: FacingMode = "user";
@@ -20,6 +20,27 @@ export const RESOLUTION_PRESETS: Record<
 export const DEFAULT_CAPTURE_SETTINGS: CaptureSettings = {
   facingMode: DEFAULT_FACING_MODE,
   resolution: "720p",
+};
+
+/** Filtre de style vidéo par défaut (aucun traitement). */
+export const DEFAULT_VIDEO_FILTER: VideoFilterId = "none";
+
+/**
+ * Préréglages de filtre visuel → valeur CSS `filter` (compatible `CanvasRenderingContext2D.filter`).
+ * Volontairement sobres : ce sont des presets de style, pas de la retouche fine.
+ */
+export const FILTER_PRESETS: Record<VideoFilterId, { label: string; cssFilter: string }> = {
+  none: { label: "Aucun", cssFilter: "none" },
+  warm: {
+    label: "Chaud",
+    cssFilter: "sepia(0.25) saturate(1.35) contrast(1.05) brightness(1.03)",
+  },
+  cool: {
+    label: "Froid",
+    cssFilter: "hue-rotate(-8deg) saturate(1.15) contrast(1.08) brightness(1.02)",
+  },
+  bw: { label: "Noir & blanc", cssFilter: "grayscale(1) contrast(1.15)" },
+  cinema: { label: "Cinéma", cssFilter: "contrast(1.2) saturate(0.85) brightness(0.95)" },
 };
 
 /**

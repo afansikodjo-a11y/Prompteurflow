@@ -14,6 +14,9 @@ export type RecorderStatus = "idle" | "recording" | "paused";
 /** Préréglage de résolution vidéo. */
 export type ResolutionPreset = "480p" | "720p" | "1080p";
 
+/** Filtre de style visuel appliqué à l'image (gravé dans l'enregistrement). */
+export type VideoFilterId = "none" | "warm" | "cool" | "bw" | "cinema";
+
 /** Réglages de capture (source de vérité détenue par le Studio). */
 export interface CaptureSettings {
   facingMode: FacingMode;
