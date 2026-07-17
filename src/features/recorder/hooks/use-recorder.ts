@@ -26,6 +26,11 @@ export interface UseRecorderResult {
 export interface UseRecorderOptions {
   /** Appelé à l'arrêt avec le clip final et sa durée (secondes) — ex. pour le persister. */
   onComplete?: (blob: Blob, durationSec: number) => void;
+  /**
+   * Durée max d'enregistrement, en secondes (plan Basique) — l'enregistrement
+   * s'arrête automatiquement à ce plafond. `undefined` = illimité (Standard/Pro).
+   */
+  maxDurationSec?: number;
 }
 
 /**
@@ -50,10 +55,12 @@ export function useRecorder(
   const urlRef = React.useRef<string | null>(null);
   const elapsedRef = React.useRef(0);
   const onCompleteRef = React.useRef(options.onComplete);
+  const maxDurationRef = React.useRef(options.maxDurationSec);
 
-  // Maintient à jour, pour le handler `onstop`, le callback et la durée courante.
+  // Maintient à jour, pour le handler `onstop` et le timer, le callback et le plafond courants.
   React.useEffect(() => {
     onCompleteRef.current = options.onComplete;
+    maxDurationRef.current = options.maxDurationSec;
   });
   React.useEffect(() => {
     elapsedRef.current = elapsed;
@@ -68,10 +75,29 @@ export function useRecorder(
     }
   }, []);
 
+  const stop = React.useCallback(() => {
+    if (recorderRef.current && recorderRef.current.state !== "inactive") {
+      recorderRef.current.stop();
+    }
+    recorderRef.current = null;
+    setStatus("idle");
+    stopTimer();
+  }, [stopTimer]);
+
+  // Le plafond de durée (plan Basique) est vérifié ici, dans le callback du
+  // timer lui-même — jamais dans l'updater fonctionnel passé à `setElapsed`,
+  // qui doit rester pur (React peut l'invoquer plusieurs fois, notamment en
+  // StrictMode) et ne peut donc pas déclencher l'arrêt de l'enregistrement.
   const startTimer = React.useCallback(() => {
     stopTimer();
-    timerRef.current = window.setInterval(() => setElapsed((value) => value + 1), 1000);
-  }, [stopTimer]);
+    timerRef.current = window.setInterval(() => {
+      const next = elapsedRef.current + 1;
+      elapsedRef.current = next;
+      setElapsed(next);
+      const max = maxDurationRef.current;
+      if (max !== undefined && next >= max) stop();
+    }, 1000);
+  }, [stopTimer, stop]);
 
   const clear = React.useCallback(() => {
     if (urlRef.current) {
@@ -126,15 +152,6 @@ export function useRecorder(
       startTimer();
     }
   }, [startTimer]);
-
-  const stop = React.useCallback(() => {
-    if (recorderRef.current && recorderRef.current.state !== "inactive") {
-      recorderRef.current.stop();
-    }
-    recorderRef.current = null;
-    setStatus("idle");
-    stopTimer();
-  }, [stopTimer]);
 
   // Nettoyage au démontage : arrêt du timer, du recorder et libération de l'URL.
   React.useEffect(() => {

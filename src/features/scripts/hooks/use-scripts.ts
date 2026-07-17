@@ -19,8 +19,8 @@ export interface UseScriptsResult {
   /** `true` une fois la collection relue depuis le stockage. */
   hydrated: boolean;
   select: (id: string) => void;
-  /** Crée un script vide, le sélectionne et retourne son id. */
-  create: () => string;
+  /** Crée un script vide, le sélectionne et retourne son id ; `null` si le plafond (plan Basique) est atteint. */
+  create: () => string | null;
   rename: (id: string, title: string) => void;
   /** Supprime un script (sans effet s'il ne reste qu'un seul script). */
   remove: (id: string) => void;
@@ -52,8 +52,9 @@ function createScript(input?: Partial<Pick<Script, "title" | "content">>): Scrip
  * plus tard ne changerait que l'implémentation ici, pas les composants.
  *
  * @param seedContent Contenu du script créé automatiquement au premier lancement.
+ * @param maxScripts Nombre max de scripts (plan Basique) ; `undefined` = illimité (Standard/Pro).
  */
-export function useScripts(seedContent = ""): UseScriptsResult {
+export function useScripts(seedContent = "", maxScripts?: number): UseScriptsResult {
   const [scripts, setScripts, hydrated] = useLocalStorage<Script[]>(SCRIPTS_STORAGE_KEY, []);
   const [currentId, setCurrentId] = useLocalStorage<string | null>(
     CURRENT_SCRIPT_STORAGE_KEY,
@@ -84,11 +85,12 @@ export function useScripts(seedContent = ""): UseScriptsResult {
   const select = React.useCallback((id: string) => setCurrentId(id), [setCurrentId]);
 
   const create = React.useCallback(() => {
+    if (maxScripts !== undefined && scripts.length >= maxScripts) return null;
     const script = createScript();
     setScripts((list) => [script, ...list]);
     setCurrentId(script.id);
     return script.id;
-  }, [setScripts, setCurrentId]);
+  }, [scripts.length, maxScripts, setScripts, setCurrentId]);
 
   const rename = React.useCallback(
     (id: string, title: string) => {

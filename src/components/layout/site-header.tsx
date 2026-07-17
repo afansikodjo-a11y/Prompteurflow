@@ -3,6 +3,7 @@ import { Clapperboard } from "lucide-react";
 
 import { siteConfig } from "@/config/site";
 import { ModeToggle } from "@/components/theme/mode-toggle";
+import { UserMenu } from "@/features/auth";
 
 /**
  * En-tête applicatif (coquille réutilisable).
@@ -16,7 +17,10 @@ export function SiteHeader() {
           <Clapperboard className="size-5" />
           <span>{siteConfig.name}</span>
         </Link>
-        <ModeToggle />
+        <div className="flex items-center gap-3">
+          <UserMenu />
+          <ModeToggle />
+        </div>
       </div>
     </header>
   );

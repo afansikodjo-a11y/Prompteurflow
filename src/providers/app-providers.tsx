@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { ThemeProvider } from "@/components/theme/theme-provider";
+import { AuthProvider } from "@/features/auth";
 
 /**
  * Point d'entrée unique des providers côté client.
@@ -11,7 +12,7 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      {children}
+      <AuthProvider>{children}</AuthProvider>
     </ThemeProvider>
   );
 }
