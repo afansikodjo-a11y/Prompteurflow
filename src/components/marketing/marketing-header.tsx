@@ -4,13 +4,14 @@ import * as React from "react";
 import Link from "next/link";
 import { Clapperboard, Menu, X } from "lucide-react";
 
+import { FEATURE_FLAGS } from "@/config/flags";
 import { siteConfig } from "@/config/site";
 import { Button } from "@/components/ui/button";
 import { InstallButton } from "@/features/pwa";
 
 const NAV_LINKS = [
   { href: "#features", label: "Fonctionnalités" },
-  { href: "#pricing", label: "Tarifs" },
+  ...(FEATURE_FLAGS.pricingVisible ? [{ href: "#pricing", label: "Tarifs" }] : []),
   { href: "#faq", label: "FAQ" },
 ];
 

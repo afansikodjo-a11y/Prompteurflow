@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LogOut, Shield } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { FEATURE_FLAGS } from "@/config/flags";
 import { useAuth } from "../hooks/use-auth";
 
 /** Connexion/déconnexion + lien admin (si le rôle le permet), dans l'en-tête. */
@@ -20,9 +21,11 @@ export function UserMenu() {
         <Button asChild variant="ghost" size="sm">
           <Link href="/login">Connexion</Link>
         </Button>
-        <Button asChild size="sm">
-          <Link href="/signup">Créer un compte</Link>
-        </Button>
+        {FEATURE_FLAGS.signupEnabled && (
+          <Button asChild size="sm">
+            <Link href="/signup">Créer un compte</Link>
+          </Button>
+        )}
       </div>
     );
   }

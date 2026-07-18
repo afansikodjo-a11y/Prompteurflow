@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { useAuth } from "@/features/auth";
+import { FEATURE_FLAGS } from "@/config/flags";
 import { createClient } from "@/lib/supabase/client";
 import { BASIC_PLAN_ID, FAIL_CLOSED_PLAN, PRO_PLAN_ID } from "../constants";
 import { getPlan } from "../lib/plans-db";
@@ -27,6 +28,11 @@ interface SubscriptionRow {
  * Anonyme ou sans abonnement `active` → plan Basique, relu en direct depuis
  * `plans` (ses limites restent éditables par l'admin). Repli « fail-closed »
  * si la lecture échoue — jamais un déblocage silencieux de Standard/Pro.
+ *
+ * Exception temporaire : `FEATURE_FLAGS.openAccess` (phase de test, signup/
+ * tarifs coupés) donne à tout le monde les limites du plan Pro, connecté ou
+ * non — sans ça, un testeur Basique buterait sur une limite sans aucun
+ * moyen de payer, ni même de créer un compte, pour la lever.
  */
 export function useSubscription(): UseSubscriptionResult {
   const { user, loading: authLoading } = useAuth();
@@ -40,9 +46,9 @@ export function useSubscription(): UseSubscriptionResult {
     let cancelled = false;
 
     async function resolve() {
-      let planId: PlanId = BASIC_PLAN_ID;
+      let planId: PlanId = FEATURE_FLAGS.openAccess ? PRO_PLAN_ID : BASIC_PLAN_ID;
 
-      if (user) {
+      if (!FEATURE_FLAGS.openAccess && user) {
         const supabase = createClient();
         const { data } = await supabase
           .from("subscriptions")

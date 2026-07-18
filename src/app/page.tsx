@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { FEATURE_FLAGS } from "@/config/flags";
 import { getAllPlansServer } from "@/features/subscription/lib/plans-server";
 import { AudienceSection } from "@/components/marketing/audience-section";
 import { DeviceShowcase } from "@/components/marketing/device-showcase";
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const plans = await getAllPlansServer();
+  const plans = FEATURE_FLAGS.pricingVisible ? await getAllPlansServer() : [];
 
   return (
     <div className="bg-neutral-950">
@@ -33,7 +34,7 @@ export default async function HomePage() {
       <ProductDemoSection />
       <AudienceSection />
       <FeatureShowcase />
-      <PricingSection plans={plans} />
+      {FEATURE_FLAGS.pricingVisible && <PricingSection plans={plans} />}
       <TrustSection />
       <FaqSection />
       <FinalCtaSection />
