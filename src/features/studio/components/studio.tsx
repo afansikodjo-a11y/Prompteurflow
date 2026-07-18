@@ -281,6 +281,7 @@ export function Studio() {
   // frames — évite de retomber dans la course déjà corrigée sur l'écran noir.
   const handleRoll = () => {
     setEditing(false);
+    setSettingsOpen(false);
     prompter.stop(); // repart du début du script
     setCaptureActive(true);
     countdown.start(3, () => {
@@ -356,39 +357,44 @@ export function Studio() {
           </div>
         )}
 
-        <div className="absolute top-3 right-3 z-20 flex gap-2">
-          <StageButton
-            onClick={() => setCameraEnabled((value) => !value)}
-            label={cameraEnabled ? "Éteindre la caméra" : "Activer la caméra"}
-            active={!cameraEnabled}
-            disabled={isRecording}
-          >
-            {cameraEnabled ? <Video className="size-4" /> : <VideoOff className="size-4" />}
-          </StageButton>
-          <StageButton
-            onClick={() => setMirrored((value) => !value)}
-            label="Mode miroir"
-            active={mirrored}
-          >
-            <FlipHorizontal2 className="size-4" />
-          </StageButton>
-          {cameraEnabled && (
-            <>
-              <StageButton onClick={handleSwitchCamera} label="Changer de caméra">
-                <SwitchCamera className="size-4" />
-              </StageButton>
-              <StageButton onClick={() => setSettingsOpen(true)} label="Réglages de capture">
-                <Settings className="size-4" />
-              </StageButton>
-            </>
-          )}
-          <StageButton
-            onClick={() => void toggleFullscreen()}
-            label={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
-          >
-            {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-          </StageButton>
-        </div>
+        {/* Masqués pendant le décompte/tournage — inutilisables à ce moment
+            (désactivés) et n'occupaient de l'espace que pour rien : même
+            logique que la bande de filtres ci-dessous, pour laisser toute
+            la scène au texte pendant la prise. */}
+        {!isRecording && !countdown.isCounting && (
+          <div className="absolute top-3 right-3 z-20 flex gap-2">
+            <StageButton
+              onClick={() => setCameraEnabled((value) => !value)}
+              label={cameraEnabled ? "Éteindre la caméra" : "Activer la caméra"}
+              active={!cameraEnabled}
+            >
+              {cameraEnabled ? <Video className="size-4" /> : <VideoOff className="size-4" />}
+            </StageButton>
+            <StageButton
+              onClick={() => setMirrored((value) => !value)}
+              label="Mode miroir"
+              active={mirrored}
+            >
+              <FlipHorizontal2 className="size-4" />
+            </StageButton>
+            {cameraEnabled && (
+              <>
+                <StageButton onClick={handleSwitchCamera} label="Changer de caméra">
+                  <SwitchCamera className="size-4" />
+                </StageButton>
+                <StageButton onClick={() => setSettingsOpen(true)} label="Réglages de capture">
+                  <Settings className="size-4" />
+                </StageButton>
+              </>
+            )}
+            <StageButton
+              onClick={() => void toggleFullscreen()}
+              label={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
+            >
+              {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            </StageButton>
+          </div>
+        )}
 
         {cameraEnabled && !isRecording && !countdown.isCounting && (
           <FilterStrip
@@ -415,26 +421,37 @@ export function Studio() {
       {/* Barre de contrôles — en bas (portrait), sur le côté droit (paysage court) */}
       <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 shrink-0 border-t backdrop-blur short-landscape:w-80 short-landscape:overflow-y-auto short-landscape:border-t-0 short-landscape:border-l">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <ScriptsLibrary
-                scripts={scriptsState.scripts}
-                currentId={scriptsState.currentId}
-                currentTitle={currentScript?.title ?? "Sans titre"}
-                onSelect={scriptsState.select}
-                onCreate={handleCreateScript}
-                onRename={scriptsState.rename}
-                onRemove={scriptsState.remove}
-                canImport={plan.scriptImport}
-                onImport={(file) => void handleImportScript(file)}
-                onImportLocked={() => setUpgradeReason("import")}
-              />
-              <RecordingsLibrary
-                recordings={recordings.recordings}
-                getObjectUrl={recordings.getObjectUrl}
-                onRemove={recordings.remove}
-              />
-            </div>
+          <div
+            className={cn(
+              "flex flex-wrap items-center gap-3",
+              isRecording || countdown.isCounting ? "justify-center" : "justify-between",
+            )}
+          >
+            {/* Masqué pendant le décompte/tournage : inutile en pleine prise,
+                et sa disparition laisse la barre du bas rétrécir pour rendre
+                plus d'espace vertical à la scène (même logique que les
+                boutons masqués ci-dessus). */}
+            {!isRecording && !countdown.isCounting && (
+              <div className="flex flex-wrap items-center gap-2">
+                <ScriptsLibrary
+                  scripts={scriptsState.scripts}
+                  currentId={scriptsState.currentId}
+                  currentTitle={currentScript?.title ?? "Sans titre"}
+                  onSelect={scriptsState.select}
+                  onCreate={handleCreateScript}
+                  onRename={scriptsState.rename}
+                  onRemove={scriptsState.remove}
+                  canImport={plan.scriptImport}
+                  onImport={(file) => void handleImportScript(file)}
+                  onImportLocked={() => setUpgradeReason("import")}
+                />
+                <RecordingsLibrary
+                  recordings={recordings.recordings}
+                  getObjectUrl={recordings.getObjectUrl}
+                  onRemove={recordings.remove}
+                />
+              </div>
+            )}
             {cameraEnabled && (
               <div className="flex items-center gap-2">
                 <RollButton
@@ -470,21 +487,22 @@ export function Studio() {
             )}
           </div>
 
-          <TeleprompterControls
-            status={prompter.status}
-            isPlaying={prompter.isPlaying}
-            onPlay={() => {
-              setEditing(false);
-              prompter.play();
-            }}
-            onPause={prompter.pause}
-            onStop={prompter.stop}
-            speed={prompter.speed}
-            onSpeedChange={prompter.setSpeed}
-            fontSize={prompter.fontSize}
-            onFontSizeChange={prompter.setFontSize}
-            disabled={rollState !== "idle"}
-          />
+          {rollState === "idle" && (
+            <TeleprompterControls
+              status={prompter.status}
+              isPlaying={prompter.isPlaying}
+              onPlay={() => {
+                setEditing(false);
+                prompter.play();
+              }}
+              onPause={prompter.pause}
+              onStop={prompter.stop}
+              speed={prompter.speed}
+              onSpeedChange={prompter.setSpeed}
+              fontSize={prompter.fontSize}
+              onFontSizeChange={prompter.setFontSize}
+            />
+          )}
         </div>
       </div>
 
