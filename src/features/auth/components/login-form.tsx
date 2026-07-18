@@ -27,7 +27,7 @@ export function LoginForm() {
       setError(error);
       return;
     }
-    router.push("/");
+    router.push("/studio");
     router.refresh();
   };
 
