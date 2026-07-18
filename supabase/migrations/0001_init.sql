@@ -46,6 +46,10 @@ create policy "profiles: lecture de son propre profil ou par un admin"
   on public.profiles for select
   using (auth.uid() = id or public.is_admin());
 
+-- Une policy RLS ne suffit pas seule : Postgres exige aussi le GRANT de base
+-- (sinon "permission denied", même avec `using (true)`).
+grant select on public.profiles to authenticated;
+
 -- Peuple `profiles` à la création d'un compte `auth.users` — jamais via un
 -- insert client.
 create function public.handle_new_user()
@@ -95,6 +99,9 @@ create policy "plans: écriture admin uniquement"
   using (public.is_admin())
   with check (public.is_admin());
 
+grant select on public.plans to anon, authenticated;
+grant insert, update, delete on public.plans to authenticated;
+
 -- Standard et Pro partagent aujourd'hui les mêmes limites (tout débloqué) —
 -- Pro se distinguera par le stockage cloud temporaire + les sous-titres
 -- synchronisés, ajoutés dans une migration ultérieure une fois ce chantier
@@ -129,6 +136,8 @@ alter table public.subscriptions enable row level security;
 create policy "subscriptions: lecture par le propriétaire ou un admin"
   on public.subscriptions for select
   using (auth.uid() = user_id or public.is_admin());
+
+grant select on public.subscriptions to authenticated;
 
 -- =============================================================================
 -- payment_events
