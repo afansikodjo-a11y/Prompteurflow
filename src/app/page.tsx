@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 
 import { getAllPlansServer } from "@/features/subscription/lib/plans-server";
 import { AudienceSection } from "@/components/marketing/audience-section";
-import { BeforeAfterSection } from "@/components/marketing/before-after-section";
 import { DeviceShowcase } from "@/components/marketing/device-showcase";
 import { FaqSection } from "@/components/marketing/faq-section";
 import { FeatureShowcase } from "@/components/marketing/feature-showcase";
 import { FinalCtaSection } from "@/components/marketing/final-cta-section";
 import { HeroSection } from "@/components/marketing/hero-section";
+import { MarketingHeader } from "@/components/marketing/marketing-header";
+import { NarrativeSection } from "@/components/marketing/narrative-section";
 import { PricingSection } from "@/components/marketing/pricing-section";
-import { ProblemSection } from "@/components/marketing/problem-section";
 import { ProductDemoSection } from "@/components/marketing/product-demo-section";
 import { SolutionSection } from "@/components/marketing/solution-section";
 import { TrustSection } from "@/components/marketing/trust-section";
@@ -24,19 +24,19 @@ export default async function HomePage() {
   const plans = await getAllPlansServer();
 
   return (
-    <>
+    <div className="bg-neutral-950">
+      <MarketingHeader />
       <HeroSection />
-      <ProblemSection />
+      <NarrativeSection />
       <SolutionSection />
       <DeviceShowcase />
       <ProductDemoSection />
       <AudienceSection />
-      <BeforeAfterSection />
       <FeatureShowcase />
       <PricingSection plans={plans} />
       <TrustSection />
       <FaqSection />
       <FinalCtaSection />
-    </>
+    </div>
   );
 }

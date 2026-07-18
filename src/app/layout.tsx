@@ -6,7 +6,6 @@ import "./globals.css";
 
 import { siteConfig } from "@/config/site";
 import { AppProviders } from "@/providers/app-providers";
-import { SiteHeader } from "@/components/layout/site-header";
 
 export const metadata: Metadata = {
   applicationName: siteConfig.name,
@@ -41,12 +40,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang={siteConfig.locale} suppressHydrationWarning>
       <body className={`${GeistSans.variable} ${GeistMono.variable} min-h-dvh font-sans antialiased`}>
-        <AppProviders>
-          <div className="flex min-h-dvh flex-col">
-            <SiteHeader />
-            <main className="flex flex-1 flex-col">{children}</main>
-          </div>
-        </AppProviders>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

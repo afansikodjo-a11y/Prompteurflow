@@ -1,5 +1,7 @@
 import { ChevronDown } from "lucide-react";
 
+import { Reveal } from "./reveal";
+
 const FAQS = [
   {
     q: "Dois-je mémoriser mon script ?",
@@ -34,22 +36,24 @@ const FAQS = [
 /** Accordéon natif (`<details>`) — accessible et sans JS, pas de composant client nécessaire. */
 export function FaqSection() {
   return (
-    <section className="border-t">
-      <div className="mx-auto max-w-3xl px-4 py-20 sm:py-28">
-        <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">
-          Questions fréquentes
-        </h2>
-        <div className="divide-border mt-10 flex flex-col divide-y border-t border-b">
+    <section id="faq" className="border-t border-white/[0.06] bg-neutral-950 py-20 sm:py-28">
+      <div className="mx-auto max-w-3xl px-4">
+        <Reveal>
+          <h2 className="text-center text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            Questions fréquentes
+          </h2>
+        </Reveal>
+        <Reveal delay={0.08} className="mt-10 flex flex-col divide-y divide-white/[0.06] border-t border-b border-white/[0.06]">
           {FAQS.map(({ q, a }) => (
             <details key={q} className="group py-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium [&::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-white [&::-webkit-details-marker]:hidden">
                 {q}
-                <ChevronDown className="text-muted-foreground size-4 shrink-0 transition-transform group-open:rotate-180" />
+                <ChevronDown className="size-4 shrink-0 text-neutral-500 transition-transform group-open:rotate-180" />
               </summary>
-              <p className="text-muted-foreground mt-3 text-sm text-pretty">{a}</p>
+              <p className="mt-3 text-sm text-pretty text-neutral-400">{a}</p>
             </details>
           ))}
-        </div>
+        </Reveal>
       </div>
     </section>
   );

@@ -1,0 +1,96 @@
+"use client";
+
+import * as React from "react";
+import Link from "next/link";
+import { Clapperboard, Menu, X } from "lucide-react";
+
+import { siteConfig } from "@/config/site";
+import { Button } from "@/components/ui/button";
+
+const NAV_LINKS = [
+  { href: "#features", label: "Fonctionnalités" },
+  { href: "#pricing", label: "Tarifs" },
+  { href: "#faq", label: "FAQ" },
+];
+
+/**
+ * Header propre à la landing — minimal, sur fond transparent qui se pose sur
+ * la scène sombre du hero. Distinct du `SiteHeader` de l'app (adaptatif clair/
+ * sombre) : la landing a sa propre direction artistique, fixe.
+ */
+export function MarketingHeader() {
+  const [menuOpen, setMenuOpen] = React.useState(false);
+
+  return (
+    <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-neutral-950/70 backdrop-blur-lg">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+        <Link href="/" className="flex items-center gap-2 font-semibold text-white">
+          <Clapperboard className="size-5 text-violet-400" />
+          {siteConfig.name}
+        </Link>
+
+        <nav className="hidden items-center gap-8 md:flex">
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="text-sm text-neutral-400 transition-colors hover:text-white"
+            >
+              {link.label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="hidden items-center gap-3 md:flex">
+          <Link href="/login" className="text-sm text-neutral-400 transition-colors hover:text-white">
+            Connexion
+          </Link>
+          <Button
+            asChild
+            size="sm"
+            className="bg-violet-500 text-white shadow-lg shadow-violet-500/20 hover:bg-violet-400"
+          >
+            <Link href="/studio">Commencer gratuitement</Link>
+          </Button>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setMenuOpen((value) => !value)}
+          aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+          aria-expanded={menuOpen}
+          className="flex size-9 items-center justify-center rounded-full text-white md:hidden"
+        >
+          {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+        </button>
+      </div>
+
+      {menuOpen && (
+        <nav className="flex flex-col gap-1 border-t border-white/[0.06] px-4 pt-2 pb-6 md:hidden">
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              onClick={() => setMenuOpen(false)}
+              className="rounded-lg px-2 py-3 text-base text-neutral-300 hover:bg-white/5 hover:text-white"
+            >
+              {link.label}
+            </a>
+          ))}
+          <Link
+            href="/login"
+            onClick={() => setMenuOpen(false)}
+            className="rounded-lg px-2 py-3 text-base text-neutral-300 hover:bg-white/5 hover:text-white"
+          >
+            Connexion
+          </Link>
+          <Button asChild className="mt-3 bg-violet-500 text-white hover:bg-violet-400">
+            <Link href="/studio" onClick={() => setMenuOpen(false)}>
+              Commencer gratuitement
+            </Link>
+          </Button>
+        </nav>
+      )}
+    </header>
+  );
+}

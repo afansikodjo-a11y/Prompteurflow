@@ -12,11 +12,11 @@ export function PhoneFrame({ children, className }: DeviceFrameProps) {
   return (
     <div
       className={cn(
-        "relative mx-auto w-full max-w-[240px] rounded-[2.5rem] border-[6px] border-neutral-900 bg-neutral-900 p-1.5 shadow-xl dark:border-neutral-700",
+        "relative mx-auto w-full max-w-[240px] rounded-[2.5rem] border-[6px] border-neutral-800 bg-neutral-800 p-1.5 shadow-2xl ring-1 ring-white/10",
         className,
       )}
     >
-      <div className="absolute top-2.5 left-1/2 z-10 h-1.5 w-14 -translate-x-1/2 rounded-full bg-neutral-900 dark:bg-neutral-700" />
+      <div className="absolute top-2.5 left-1/2 z-10 h-1.5 w-14 -translate-x-1/2 rounded-full bg-neutral-800" />
       <div className="overflow-hidden rounded-[2rem]">{children}</div>
     </div>
   );
@@ -27,7 +27,7 @@ export function TabletFrame({ children, className }: DeviceFrameProps) {
   return (
     <div
       className={cn(
-        "relative mx-auto w-full max-w-sm rounded-[1.75rem] border-[10px] border-neutral-900 bg-neutral-900 shadow-xl dark:border-neutral-700",
+        "relative mx-auto w-full max-w-sm rounded-[1.75rem] border-[10px] border-neutral-800 bg-neutral-800 shadow-2xl ring-1 ring-white/10",
         className,
       )}
     >
@@ -40,11 +40,11 @@ export function TabletFrame({ children, className }: DeviceFrameProps) {
 export function LaptopFrame({ children, className }: DeviceFrameProps) {
   return (
     <div className={cn("mx-auto w-full max-w-md", className)}>
-      <div className="rounded-t-xl border-[10px] border-b-0 border-neutral-900 bg-neutral-900 shadow-xl dark:border-neutral-700">
+      <div className="rounded-t-xl border-[10px] border-b-0 border-neutral-800 bg-neutral-800 shadow-2xl ring-1 ring-white/10">
         <div className="overflow-hidden rounded-t-sm">{children}</div>
       </div>
-      <div className="h-3 rounded-b-xl bg-neutral-800 shadow-xl dark:bg-neutral-600" />
-      <div className="mx-auto h-1.5 w-1/3 rounded-b-lg bg-neutral-700 dark:bg-neutral-500" />
+      <div className="h-3 rounded-b-xl bg-neutral-700 shadow-2xl" />
+      <div className="mx-auto h-1.5 w-1/3 rounded-b-lg bg-neutral-600" />
     </div>
   );
 }
