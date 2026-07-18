@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Download, Share, SquarePlus } from "lucide-react";
+import { Download, Menu, Share, SquarePlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,77 +11,98 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { useInstallPrompt } from "../hooks/use-install-prompt";
+
+function InstructionStep({ number, children }: { number: number; children: React.ReactNode }) {
+  return (
+    <li className="flex items-center gap-3">
+      <span className="bg-muted flex size-7 shrink-0 items-center justify-center rounded-full font-medium">
+        {number}
+      </span>
+      <span className="flex items-center gap-1.5">{children}</span>
+    </li>
+  );
+}
 
 /**
  * Bouton « Installer l'application », posé dans l'en-tête (visible sur toutes
- * les pages). Ne s'affiche que si l'app n'est pas déjà installée et qu'une
- * voie d'installation existe : invite native (Chrome/Edge/Android) ou
- * instructions manuelles (Safari iOS, qui n'a pas d'invite programmable).
+ * les pages) — permanent : reste affiché tant que l'app n'est pas installée,
+ * même avant que le navigateur ne juge le moment opportun pour sa propre
+ * invite (`beforeinstallprompt` ne se déclenche pas immédiatement, selon des
+ * heuristiques d'engagement propres à chaque navigateur).
+ *
+ * Au clic : invite native si disponible (Chrome/Edge/Android déjà prêts),
+ * sinon des instructions manuelles — spécifiques à Safari iOS (aucune invite
+ * programmable là-bas), ou génériques ailleurs (menu du navigateur).
  */
-export function InstallButton() {
+interface InstallButtonProps {
+  /** Fusionné avec les classes par défaut — pour s'adapter à un en-tête sombre (landing) vs adaptatif (app). */
+  className?: string;
+  /** Cache le libellé sous 640px (icône seule) — utile dans un en-tête compact, pas dans un menu déjà plein écran. Par défaut `true`. */
+  hideLabelOnMobile?: boolean;
+}
+
+export function InstallButton({ className, hideLabelOnMobile = true }: InstallButtonProps) {
   const { isInstalled, canInstall, isIosSafari, promptInstall } = useInstallPrompt();
-  const [iosDialogOpen, setIosDialogOpen] = React.useState(false);
+  const [instructionsOpen, setInstructionsOpen] = React.useState(false);
 
-  if (isInstalled || (!canInstall && !isIosSafari)) return null;
+  if (isInstalled) return null;
 
-  if (isIosSafari) {
-    return (
-      <>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5"
-          aria-label="Installer l'application"
-          onClick={() => setIosDialogOpen(true)}
-        >
-          <Download className="size-4" />
-          <span className="hidden sm:inline" aria-hidden="true">
-            Installer
-          </span>
-        </Button>
-        <Dialog open={iosDialogOpen} onOpenChange={setIosDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Installer l&apos;application</DialogTitle>
-              <DialogDescription>Safari ne propose pas d&apos;installation automatique — deux étapes suffisent :</DialogDescription>
-            </DialogHeader>
-            <ol className="flex flex-col gap-3 text-sm">
-              <li className="flex items-center gap-3">
-                <span className="bg-muted flex size-7 shrink-0 items-center justify-center rounded-full font-medium">
-                  1
-                </span>
-                <span className="flex items-center gap-1.5">
-                  Appuyez sur <Share className="size-4" /> Partager
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="bg-muted flex size-7 shrink-0 items-center justify-center rounded-full font-medium">
-                  2
-                </span>
-                <span className="flex items-center gap-1.5">
-                  Choisissez <SquarePlus className="size-4" /> Sur l&apos;écran d&apos;accueil
-                </span>
-              </li>
-            </ol>
-          </DialogContent>
-        </Dialog>
-      </>
-    );
-  }
+  const handleClick = () => {
+    if (canInstall) {
+      void promptInstall();
+      return;
+    }
+    setInstructionsOpen(true);
+  };
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      className="gap-1.5"
-      aria-label="Installer l'application"
-      onClick={() => void promptInstall()}
-    >
-      <Download className="size-4" />
-      <span className="hidden sm:inline" aria-hidden="true">
-        Installer
-      </span>
-    </Button>
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        className={cn("gap-1.5", className)}
+        aria-label="Installer l'application"
+        onClick={handleClick}
+      >
+        <Download className="size-4" />
+        <span className={cn(hideLabelOnMobile && "hidden sm:inline")} aria-hidden="true">
+          Installer
+        </span>
+      </Button>
+
+      <Dialog open={instructionsOpen} onOpenChange={setInstructionsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Installer l&apos;application</DialogTitle>
+            <DialogDescription>
+              {isIosSafari
+                ? "Safari ne propose pas d'installation automatique — deux étapes suffisent :"
+                : "Ajoutez PrompteurFlow à votre écran d'accueil pour y accéder en un tap :"}
+            </DialogDescription>
+          </DialogHeader>
+          {isIosSafari ? (
+            <ol className="flex flex-col gap-3 text-sm">
+              <InstructionStep number={1}>
+                Appuyez sur <Share className="size-4" /> Partager
+              </InstructionStep>
+              <InstructionStep number={2}>
+                Choisissez <SquarePlus className="size-4" /> Sur l&apos;écran d&apos;accueil
+              </InstructionStep>
+            </ol>
+          ) : (
+            <ol className="flex flex-col gap-3 text-sm">
+              <InstructionStep number={1}>
+                Ouvrez le menu <Menu className="size-4" /> de votre navigateur
+              </InstructionStep>
+              <InstructionStep number={2}>
+                Choisissez « Installer l&apos;application » ou « Ajouter à l&apos;écran d&apos;accueil »
+              </InstructionStep>
+            </ol>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -6,6 +6,7 @@ import { Clapperboard, Menu, X } from "lucide-react";
 
 import { siteConfig } from "@/config/site";
 import { Button } from "@/components/ui/button";
+import { InstallButton } from "@/features/pwa";
 
 const NAV_LINKS = [
   { href: "#features", label: "Fonctionnalités" },
@@ -42,6 +43,7 @@ export function MarketingHeader() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
+          <InstallButton className="border-white/15 bg-white/5 text-white hover:bg-white/10" />
           <Link href="/login" className="text-sm text-neutral-400 transition-colors hover:text-white">
             Connexion
           </Link>
@@ -89,6 +91,10 @@ export function MarketingHeader() {
               Commencer gratuitement
             </Link>
           </Button>
+          <InstallButton
+            hideLabelOnMobile={false}
+            className="mt-1.5 w-full border-white/15 bg-white/5 text-white hover:bg-white/10"
+          />
         </nav>
       )}
     </header>
