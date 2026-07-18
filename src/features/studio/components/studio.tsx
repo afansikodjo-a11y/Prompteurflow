@@ -61,7 +61,7 @@ import {
 } from "@/features/teleprompter";
 
 /** Raison de la relance d'upgrade affichée à l'utilisateur (plan Basique). */
-type UpgradeReason = "filter" | "scripts" | "duration" | null;
+type UpgradeReason = "filter" | "scripts" | "duration" | "import" | null;
 
 const UPGRADE_MESSAGES: Record<Exclude<UpgradeReason, null>, { title: string; description: string }> = {
   filter: {
@@ -75,6 +75,10 @@ const UPGRADE_MESSAGES: Record<Exclude<UpgradeReason, null>, { title: string; de
   duration: {
     title: "Durée maximale atteinte",
     description: "Le plan Basique limite la durée d'un enregistrement. Passez au plan Standard pour enregistrer sans limite.",
+  },
+  import: {
+    title: "Import de script réservé au plan Standard",
+    description: "Passez au plan Standard pour importer un script depuis un fichier .txt.",
   },
 };
 
@@ -264,6 +268,12 @@ export function Studio() {
     if (scriptsState.create() === null) setUpgradeReason("scripts");
   };
 
+  const handleImportScript = async (file: File) => {
+    const content = await file.text();
+    const title = file.name.replace(/\.[^/.]+$/, "");
+    if (scriptsState.create({ title, content }) === null) setUpgradeReason("scripts");
+  };
+
   // « Tourner » : décompte, puis enregistrement + défilement synchronisés.
   // `captureActive` passe à `true` dès le décompte (pas seulement au démarrage
   // effectif de l'enregistrement) pour laisser le pipeline canvas quelques
@@ -415,6 +425,9 @@ export function Studio() {
                 onCreate={handleCreateScript}
                 onRename={scriptsState.rename}
                 onRemove={scriptsState.remove}
+                canImport={plan.scriptImport}
+                onImport={(file) => void handleImportScript(file)}
+                onImportLocked={() => setUpgradeReason("import")}
               />
               <RecordingsLibrary
                 recordings={recordings.recordings}

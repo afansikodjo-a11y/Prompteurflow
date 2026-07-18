@@ -19,8 +19,11 @@ export interface UseScriptsResult {
   /** `true` une fois la collection relue depuis le stockage. */
   hydrated: boolean;
   select: (id: string) => void;
-  /** Crée un script vide, le sélectionne et retourne son id ; `null` si le plafond (plan Basique) est atteint. */
-  create: () => string | null;
+  /**
+   * Crée un script (vide, ou depuis `input` — ex. import de fichier), le
+   * sélectionne et retourne son id ; `null` si le plafond (plan Basique) est atteint.
+   */
+  create: (input?: Partial<Pick<Script, "title" | "content">>) => string | null;
   rename: (id: string, title: string) => void;
   /** Supprime un script (sans effet s'il ne reste qu'un seul script). */
   remove: (id: string) => void;
@@ -84,13 +87,16 @@ export function useScripts(seedContent = "", maxScripts?: number): UseScriptsRes
 
   const select = React.useCallback((id: string) => setCurrentId(id), [setCurrentId]);
 
-  const create = React.useCallback(() => {
-    if (maxScripts !== undefined && scripts.length >= maxScripts) return null;
-    const script = createScript();
-    setScripts((list) => [script, ...list]);
-    setCurrentId(script.id);
-    return script.id;
-  }, [scripts.length, maxScripts, setScripts, setCurrentId]);
+  const create = React.useCallback(
+    (input?: Partial<Pick<Script, "title" | "content">>) => {
+      if (maxScripts !== undefined && scripts.length >= maxScripts) return null;
+      const script = createScript(input);
+      setScripts((list) => [script, ...list]);
+      setCurrentId(script.id);
+      return script.id;
+    },
+    [scripts.length, maxScripts, setScripts, setCurrentId],
+  );
 
   const rename = React.useCallback(
     (id: string, title: string) => {

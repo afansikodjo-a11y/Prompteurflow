@@ -19,4 +19,6 @@ export interface Plan {
   watermark: boolean;
   /** Filtres vidéo débloqués pour ce plan. */
   unlockedFilters: VideoFilterId[];
+  /** Import de script depuis un fichier (.txt). */
+  scriptImport: boolean;
 }

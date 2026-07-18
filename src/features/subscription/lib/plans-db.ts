@@ -9,9 +9,11 @@ interface PlanRow {
   max_scripts: number | null;
   watermark: boolean;
   unlocked_filters: string[];
+  script_import: boolean;
 }
 
-const COLUMNS = "id, name, price_xof, max_duration_sec, max_scripts, watermark, unlocked_filters";
+const COLUMNS =
+  "id, name, price_xof, max_duration_sec, max_scripts, watermark, unlocked_filters, script_import";
 
 function rowToPlan(row: PlanRow): Plan {
   return {
@@ -22,6 +24,7 @@ function rowToPlan(row: PlanRow): Plan {
     maxScripts: row.max_scripts,
     watermark: row.watermark,
     unlockedFilters: row.unlocked_filters as Plan["unlockedFilters"],
+    scriptImport: row.script_import,
   };
 }
 
@@ -50,5 +53,6 @@ export async function updatePlan(id: PlanId, patch: Partial<Plan>): Promise<void
   if (patch.maxScripts !== undefined) update.max_scripts = patch.maxScripts;
   if (patch.watermark !== undefined) update.watermark = patch.watermark;
   if (patch.unlockedFilters !== undefined) update.unlocked_filters = patch.unlockedFilters;
+  if (patch.scriptImport !== undefined) update.script_import = patch.scriptImport;
   await supabase.from("plans").update(update).eq("id", id);
 }

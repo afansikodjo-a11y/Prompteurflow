@@ -96,17 +96,31 @@ function PlanCard({ plan, onSave }: PlanCardProps) {
         </div>
       </div>
 
-      <Label className="w-fit">
-        <input
-          type="checkbox"
-          checked={draft.watermark}
-          onChange={(event) => {
-            setSaved(false);
-            setDraft((current) => ({ ...current, watermark: event.target.checked }));
-          }}
-        />
-        Filigrane à l&apos;export
-      </Label>
+      <div className="flex flex-wrap gap-4">
+        <Label className="w-fit">
+          <input
+            type="checkbox"
+            checked={draft.watermark}
+            onChange={(event) => {
+              setSaved(false);
+              setDraft((current) => ({ ...current, watermark: event.target.checked }));
+            }}
+          />
+          Filigrane à l&apos;export
+        </Label>
+
+        <Label className="w-fit">
+          <input
+            type="checkbox"
+            checked={draft.scriptImport}
+            onChange={(event) => {
+              setSaved(false);
+              setDraft((current) => ({ ...current, scriptImport: event.target.checked }));
+            }}
+          />
+          Import de script (.txt)
+        </Label>
+      </div>
 
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Filtres débloqués</span>

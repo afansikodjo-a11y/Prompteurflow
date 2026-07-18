@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, FolderOpen, Plus } from "lucide-react";
+import { ChevronDown, FolderOpen, Lock, Plus, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +23,11 @@ interface ScriptsLibraryProps {
   onCreate: () => void;
   onRename: (id: string, title: string) => void;
   onRemove: (id: string) => void;
+  /** Import de script depuis un fichier .txt (plans Standard/Pro). */
+  canImport: boolean;
+  onImport: (file: File) => void;
+  /** Appelé au clic sur « Importer » quand `canImport` est faux. */
+  onImportLocked: () => void;
 }
 
 /**
@@ -37,8 +42,12 @@ export function ScriptsLibrary({
   onCreate,
   onRename,
   onRemove,
+  canImport,
+  onImport,
+  onImportLocked,
 }: ScriptsLibraryProps) {
   const [open, setOpen] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleSelect = (id: string) => {
     onSelect(id);
@@ -47,6 +56,22 @@ export function ScriptsLibrary({
 
   const handleCreate = () => {
     onCreate();
+    setOpen(false);
+  };
+
+  const handleImportClick = () => {
+    if (!canImport) {
+      onImportLocked();
+      return;
+    }
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = ""; // permet de réimporter le même fichier ensuite
+    if (!file) return;
+    onImport(file);
     setOpen(false);
   };
 
@@ -70,6 +95,18 @@ export function ScriptsLibrary({
           <Button onClick={handleCreate} className="w-full gap-2">
             <Plus className="size-4" />
             Nouveau script
+          </Button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".txt,text/plain"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <Button variant="outline" onClick={handleImportClick} className="w-full gap-2">
+            {canImport ? <Upload className="size-4" /> : <Lock className="size-4" />}
+            Importer un fichier (.txt)
           </Button>
 
           <ul className="flex flex-col gap-1">
