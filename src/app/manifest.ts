@@ -10,7 +10,9 @@ export default function manifest(): MetadataRoute.Manifest {
     name: siteConfig.name,
     short_name: siteConfig.shortName,
     description: siteConfig.description,
-    start_url: "/",
+    // Ouvre directement l'outil, pas la page de vente : un utilisateur qui
+    // installe l'app veut filmer, pas revoir l'argumentaire marketing.
+    start_url: "/studio",
     scope: "/",
     display: "standalone",
     background_color: siteConfig.themeColor.dark,
