@@ -100,13 +100,13 @@ export function ScriptsLibrary({
           <input
             ref={fileInputRef}
             type="file"
-            accept=".txt,text/plain"
+            accept=".txt,text/plain,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,application/pdf"
             className="hidden"
             onChange={handleFileChange}
           />
           <Button variant="outline" onClick={handleImportClick} className="w-full gap-2">
             {canImport ? <Upload className="size-4" /> : <Lock className="size-4" />}
-            Importer un fichier (.txt)
+            Importer un fichier (.txt, .docx, .pdf)
           </Button>
 
           <ul className="flex flex-col gap-1">

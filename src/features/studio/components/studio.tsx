@@ -49,7 +49,7 @@ import {
   type VideoFilterId,
 } from "@/features/recorder";
 import { RecordingsLibrary, useRecordings } from "@/features/recordings";
-import { ScriptsLibrary, useScripts } from "@/features/scripts";
+import { parseScriptFile, ScriptsLibrary, UnsupportedFileTypeError, useScripts } from "@/features/scripts";
 import { useSubscription } from "@/features/subscription";
 import {
   DEFAULT_SCRIPT,
@@ -175,6 +175,7 @@ function RollButton({
 export function Studio() {
   const { plan } = useSubscription();
   const [upgradeReason, setUpgradeReason] = React.useState<UpgradeReason>(null);
+  const [importError, setImportError] = React.useState<string | null>(null);
   const scriptsState = useScripts(DEFAULT_SCRIPT, plan.maxScripts ?? undefined);
   const { currentScript } = scriptsState;
   const [mirrored, setMirrored] = useLocalStorage("prompteurflow:mirrored", false);
@@ -269,7 +270,21 @@ export function Studio() {
   };
 
   const handleImportScript = async (file: File) => {
-    const content = await file.text();
+    let content: string;
+    try {
+      content = await parseScriptFile(file);
+    } catch (error) {
+      setImportError(
+        error instanceof UnsupportedFileTypeError
+          ? "Format de fichier non pris en charge (.txt, .docx et .pdf uniquement)."
+          : "Impossible de lire ce fichier. Vérifiez qu'il n'est pas corrompu ou protégé par un mot de passe.",
+      );
+      return;
+    }
+    if (!content.trim()) {
+      setImportError("Aucun texte n'a pu être extrait de ce fichier (PDF scanné sans texte, par exemple).");
+      return;
+    }
     const title = file.name.replace(/\.[^/.]+$/, "");
     if (scriptsState.create({ title, content }) === null) setUpgradeReason("scripts");
   };
@@ -535,6 +550,18 @@ export function Studio() {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={importError !== null} onOpenChange={(open) => !open && setImportError(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import impossible</DialogTitle>
+            <DialogDescription>{importError}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setImportError(null)}>Compris</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
