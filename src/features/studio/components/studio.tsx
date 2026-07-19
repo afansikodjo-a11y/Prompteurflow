@@ -197,7 +197,7 @@ export function Studio() {
   // nécessaire notamment sur Safari/iOS, qui ne respecte pas de façon
   // fiable les contraintes getUserMedia désactivant l'AGC (voir
   // `use-camera.ts`) — Android/Chrome les honore correctement, iOS non.
-  const boostedStream = useBoostedAudio(camera.stream);
+  const boostedAudio = useBoostedAudio(camera.stream);
   // `captureActive` borne la fenêtre où le filigrane est gravé (décompte →
   // fin d'enregistrement) : le pipeline canvas est coûteux (dessin de chaque
   // frame + ré-encodage), on évite de le faire tourner en continu pendant le
@@ -210,7 +210,7 @@ export function Studio() {
   // sont gravés dans les pixels ici, en amont de l'aperçu ET de
   // l'enregistrement, pour que les deux montrent/capturent le même rendu.
   const filteredStream = useFilteredStream(
-    boostedStream,
+    boostedAudio.stream,
     filter,
     plan.watermark && captureActive ? siteConfig.name : undefined,
   );
@@ -282,6 +282,12 @@ export function Studio() {
   const handleRoll = () => {
     setEditing(false);
     setSettingsOpen(false);
+    // Appel direct dans la pile du clic : sur iOS Safari, c'est la seule
+    // façon fiable d'activer l'AudioContext du boost audio (voir
+    // `use-boosted-audio.ts`) — sans ça, le contexte peut rester suspendu
+    // en silence selon le timing, d'où un volume qui « ne marche pas
+    // toujours » constaté sur iPhone.
+    boostedAudio.resume();
     prompter.stop(); // repart du début du script
     setCaptureActive(true);
     countdown.start(3, () => {

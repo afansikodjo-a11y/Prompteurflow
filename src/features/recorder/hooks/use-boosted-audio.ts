@@ -15,8 +15,23 @@ import * as React from "react";
  * dépend d'aucun réglage honoré (ou non) par le navigateur, donc identique
  * sur toutes les plateformes.
  */
-export function useBoostedAudio(stream: MediaStream | null): MediaStream | null {
+export interface UseBoostedAudioResult {
+  stream: MediaStream | null;
+  /**
+   * Relance l'`AudioContext` — à appeler depuis un geste utilisateur direct
+   * (ex. le clic sur « Tourner »). Le `resume()` automatique ci-dessous, à
+   * la création du flux caméra, ne suffit pas toujours sur iOS Safari : il
+   * n'active l'AudioContext de façon fiable que s'il est appelé dans la
+   * pile d'un vrai geste, pas dans un effet qui réagit à un changement
+   * d'état asynchrone — d'où le volume qui « ne marche pas toujours »
+   * constaté sur iPhone (le contexte reste parfois suspendu en silence).
+   */
+  resume: () => void;
+}
+
+export function useBoostedAudio(stream: MediaStream | null): UseBoostedAudioResult {
   const [output, setOutput] = React.useState<MediaStream | null>(stream);
+  const audioContextRef = React.useRef<AudioContext | null>(null);
 
   React.useEffect(() => {
     if (!stream || stream.getAudioTracks().length === 0 || typeof AudioContext === "undefined") {
@@ -25,6 +40,7 @@ export function useBoostedAudio(stream: MediaStream | null): MediaStream | null 
     }
 
     const audioContext = new AudioContext();
+    audioContextRef.current = audioContext;
     void audioContext.resume().catch(() => {});
 
     // Compresseur : resserre l'écart entre passages forts et faibles (comme
@@ -72,8 +88,13 @@ export function useBoostedAudio(stream: MediaStream | null): MediaStream | null 
       // `use-filtered-stream.ts`).
       destination.stream.getAudioTracks().forEach((track) => track.stop());
       void audioContext.close().catch(() => {});
+      audioContextRef.current = null;
     };
   }, [stream]);
 
-  return output;
+  const resume = React.useCallback(() => {
+    void audioContextRef.current?.resume().catch(() => {});
+  }, []);
+
+  return { stream: output, resume };
 }
