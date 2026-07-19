@@ -43,29 +43,33 @@ export function useBoostedAudio(stream: MediaStream | null): UseBoostedAudioResu
     audioContextRef.current = audioContext;
     void audioContext.resume().catch(() => {});
 
-    // Compresseur : resserre l'écart entre passages forts et faibles (comme
-    // le fait la plupart des applis caméra), puis un gain fixe pour relever
-    // le niveau global. Un compresseur seul ne garantit pas un plafond strict
-    // (une entrée déjà forte + ce gain peut dépasser l'amplitude max et
-    // écrêter — mesuré en test : pic à 1.096 sans limiteur, du son distordu,
-    // pire que trop faible) — d'où le limiteur final en filet de sécurité.
+    // Compresseur : seuil bas (-40 dB) pour agir sur quasi tout le signal
+    // vocal, pas seulement les pics forts — un micro qui capte globalement
+    // bas (typique iPhone selon la distance/orientation) reste sinon
+    // inchangé sous le seuil, un ratio élevé (6:1) resserre fortement
+    // l'écart. Gain de rattrapage nettement plus agressif (×3.2, ~+10 dB)
+    // appliqué APRÈS compression, donc sans risque d'écrêter la plupart du
+    // temps. Un compresseur + gain seuls ne garantissent pas un plafond
+    // strict sur les rares transitoires encore chauds (mesuré en test :
+    // pic à 1.096 sans limiteur, du son distordu, pire que trop faible)
+    // — d'où le limiteur final en filet de sécurité, quasi brick-wall.
     const source = audioContext.createMediaStreamSource(new MediaStream(stream.getAudioTracks()));
     const compressor = audioContext.createDynamicsCompressor();
-    compressor.threshold.value = -24;
-    compressor.knee.value = 30;
-    compressor.ratio.value = 3;
-    compressor.attack.value = 0.01;
-    compressor.release.value = 0.25;
+    compressor.threshold.value = -40;
+    compressor.knee.value = 10;
+    compressor.ratio.value = 6;
+    compressor.attack.value = 0.003;
+    compressor.release.value = 0.15;
     const makeupGain = audioContext.createGain();
-    makeupGain.gain.value = 1.4;
-    // Limiteur : quasi brick-wall, garantit qu'aucun pic ne dépasse ~-3 dB
-    // (≈ 0.7 en amplitude) quel que soit le niveau d'entrée ou le gain ci-dessus.
+    makeupGain.gain.value = 3.2;
+    // Limiteur : quasi brick-wall, garantit qu'aucun pic ne dépasse ~-1 dB
+    // (≈ 0.9 en amplitude) quel que soit le niveau d'entrée ou le gain ci-dessus.
     const limiter = audioContext.createDynamicsCompressor();
-    limiter.threshold.value = -3;
+    limiter.threshold.value = -1;
     limiter.knee.value = 0;
     limiter.ratio.value = 20;
-    limiter.attack.value = 0.002;
-    limiter.release.value = 0.1;
+    limiter.attack.value = 0.001;
+    limiter.release.value = 0.08;
     const destination = audioContext.createMediaStreamDestination();
 
     source.connect(compressor);
