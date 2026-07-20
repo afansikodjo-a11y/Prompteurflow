@@ -6,21 +6,21 @@ const DEVICES = [
   {
     frame: PhoneFrame,
     title: "Téléphone",
-    description: "Filmez vos vidéos où que vous soyez, avec l'appareil que vous avez déjà en poche.",
+    description: "Crée où que tu sois, avec l'appareil que tu as déjà dans la main.",
     mockupClassName: "rounded-none",
     offsetClassName: "lg:mt-10",
   },
   {
     frame: TabletFrame,
     title: "Tablette",
-    description: "Profitez d'un écran plus grand pour lire confortablement votre script en filmant.",
+    description: "Plus d'espace pour lire confortablement ton script en filmant.",
     mockupClassName: "rounded-none",
     offsetClassName: "",
   },
   {
     frame: LaptopFrame,
     title: "Ordinateur",
-    description: "Préparez et enregistrez vos présentations, formations ou visioconférences depuis votre bureau.",
+    description: "Idéal pour les formations, présentations et vidéos longues.",
     mockupClassName: "aspect-video rounded-none",
     offsetClassName: "lg:mt-10",
   },
@@ -32,11 +32,10 @@ export function DeviceShowcase() {
       <div className="mx-auto max-w-6xl px-4">
         <Reveal className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Créez sur l&apos;appareil qui vous convient.
+            Ton studio de création est déjà avec toi.
           </h2>
           <p className="mt-4 text-lg text-pretty text-neutral-400">
-            PrompteurFlow fonctionne directement dans votre navigateur — le même prompteur, la
-            même caméra, sur téléphone, tablette ou ordinateur.
+            Téléphone. Tablette. Ordinateur. Un seul outil pour créer partout.
           </p>
         </Reveal>
 

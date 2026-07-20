@@ -4,6 +4,7 @@ import { FEATURE_FLAGS } from "@/config/flags";
 import { getAllPlansServer } from "@/features/subscription/lib/plans-server";
 import { AudienceSection } from "@/components/marketing/audience-section";
 import { DeviceShowcase } from "@/components/marketing/device-showcase";
+import { EmotionalSection } from "@/components/marketing/emotional-section";
 import { FaqSection } from "@/components/marketing/faq-section";
 import { FeatureShowcase } from "@/components/marketing/feature-showcase";
 import { FinalCtaSection } from "@/components/marketing/final-cta-section";
@@ -18,7 +19,7 @@ import { TrustSection } from "@/components/marketing/trust-section";
 export const metadata: Metadata = {
   title: "Prompteur vidéo en ligne — filmez avec votre script sous les yeux",
   description:
-    "PrompteurFlow est un prompteur vidéo qui fait défiler votre script pendant que vous filmez, depuis votre téléphone, votre tablette ou votre ordinateur. Créez vos vidéos sans mémoriser vos textes.",
+    "Prompteur Flow est un prompteur vidéo qui fait défiler votre script pendant que vous filmez, depuis ton téléphone, ta tablette ou ton ordinateur. Ton script. Ta caméra. Un seul appareil.",
 };
 
 export default async function HomePage() {
@@ -29,11 +30,12 @@ export default async function HomePage() {
       <MarketingHeader />
       <HeroSection />
       <NarrativeSection />
-      <SolutionSection />
-      <DeviceShowcase />
       <ProductDemoSection />
+      <SolutionSection />
       <AudienceSection />
+      <DeviceShowcase />
       <FeatureShowcase />
+      <EmotionalSection />
       {FEATURE_FLAGS.pricingVisible && <PricingSection plans={plans} />}
       <TrustSection />
       <FaqSection />

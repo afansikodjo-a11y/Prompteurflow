@@ -4,32 +4,36 @@ import { Reveal } from "./reveal";
 
 const FAQS = [
   {
-    q: "Dois-je mémoriser mon script ?",
-    a: "Non. Votre texte s'affiche à l'écran et défile pendant que vous filmez.",
+    q: "Dois-je utiliser un deuxième téléphone ?",
+    a: "Non. Prompteur Flow te permet de lire ton script et d'enregistrer ta vidéo avec le même appareil.",
   },
   {
-    q: "Puis-je utiliser l'application sur téléphone, tablette ou ordinateur ?",
-    a: "Oui. PrompteurFlow fonctionne directement dans votre navigateur, sur les trois.",
+    q: "Est-ce que ça fonctionne sur téléphone, tablette et ordinateur ?",
+    a: "Oui, directement dans ton navigateur, sur les trois.",
   },
   {
-    q: "Ai-je besoin d'un deuxième appareil ?",
-    a: "Non. Un seul appareil sert à la fois de prompteur et de caméra.",
+    q: "Je ne suis pas à l'aise devant une caméra. Est-ce que c'est pour moi ?",
+    a: "Oui. Tu n'as plus besoin de mémoriser chaque phrase — ton script t'accompagne pendant l'enregistrement.",
   },
   {
-    q: "Est-ce adapté aux débutants ?",
-    a: "Oui. Si vous savez utiliser la caméra de votre appareil, vous pouvez commencer immédiatement.",
+    q: "Puis-je refaire une prise ?",
+    a: "Oui. Une prise ne te convient pas ? Tu peux recommencer immédiatement.",
+  },
+  {
+    q: "Est-ce adapté aux vidéos TikTok, Reels et YouTube ?",
+    a: "Oui.",
   },
   {
     q: "Puis-je utiliser mes propres scripts ?",
-    a: "Oui. Écrivez-les directement dans l'application, ou importez un fichier .txt (plans Standard et Pro).",
+    a: "Oui. Écris-les directement dans l'application, ou importe un fichier existant (.txt, .docx, .pdf).",
   },
   {
     q: "Mes vidéos sont-elles envoyées sur un serveur ?",
-    a: "Non. Elles restent stockées sur votre appareil ; vous choisissez vous-même quand les télécharger.",
+    a: "Non. Elles restent stockées sur ton appareil ; tu choisis toi-même quand les télécharger.",
   },
   {
     q: "Puis-je essayer avant de m'engager ?",
-    a: "Oui. Le plan Basique est utilisable gratuitement, sans carte bancaire et sans création de compte.",
+    a: "Oui, sans carte bancaire et sans création de compte.",
   },
 ];
 

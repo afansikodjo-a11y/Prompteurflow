@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 
 const DEFAULT_LINES = [
   "Bienvenue sur PrompteurFlow.",
-  "Votre texte défile pendant que vous filmez.",
-  "Regardez la caméra, pas votre texte.",
-  "Créez vos vidéos sans jamais les mémoriser.",
+  "Ton texte défile pendant que tu filmes.",
+  "Regarde la caméra, pas ton texte.",
+  "Crée tes vidéos sans jamais les mémoriser.",
 ];
 
 const FILTER_LABELS = ["Aucun", "Chaud", "Froid", "N&B"];
@@ -21,7 +21,7 @@ interface PrompterMockupProps {
   recording?: boolean;
   /** Affiche la bande de filtres, comme sur la vraie scène du Studio. */
   showFilters?: boolean;
-  /** Halo violet ambiant derrière le cadre — désactivé dans les compositions denses (grilles, cadres d'appareils). */
+  /** Halo vert ambiant derrière le cadre — désactivé dans les compositions denses (grilles, cadres d'appareils). */
   glow?: boolean;
 }
 
@@ -44,7 +44,7 @@ export function PrompterMockup({
       {glow && (
         <div
           aria-hidden
-          className="absolute inset-6 -z-10 rounded-full bg-violet-600/30 blur-[80px]"
+          className="bg-brand/25 absolute inset-6 -z-10 rounded-full blur-[80px]"
         />
       )}
       <div
@@ -54,7 +54,7 @@ export function PrompterMockup({
         )}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,theme(colors.violet.500/0.12),transparent_60%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,theme(colors.brand/0.12),transparent_60%)]" />
 
         <motion.div
           className="absolute inset-x-0 top-1/2 flex flex-col gap-10 px-6 text-center"
@@ -82,7 +82,7 @@ export function PrompterMockup({
           </div>
         ) : (
           <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1 text-[10px] font-medium text-white backdrop-blur">
-            <Sparkles className="size-3 text-violet-300" />
+            <Sparkles className="text-brand-bright size-3" />
             Aperçu
           </div>
         )}
@@ -94,7 +94,7 @@ export function PrompterMockup({
                 key={label}
                 className={cn(
                   "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-medium backdrop-blur",
-                  index === 0 ? "bg-violet-500 text-white" : "bg-white/10 text-white/80",
+                  index === 0 ? "bg-brand text-black" : "bg-white/10 text-white/80",
                 )}
               >
                 {label}

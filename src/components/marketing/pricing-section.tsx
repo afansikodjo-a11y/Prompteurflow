@@ -64,12 +64,12 @@ export function PricingSection({ plans }: PricingSectionProps) {
                     className={cn(
                       "relative flex h-full flex-col gap-6 rounded-2xl border p-6",
                       highlighted
-                        ? "border-violet-400/30 bg-violet-500/[0.06] shadow-2xl shadow-violet-950/50"
+                        ? "border-brand/30 bg-brand/[0.06] shadow-2xl shadow-black/50"
                         : "border-white/10 bg-white/[0.03]",
                     )}
                   >
                     {highlighted && (
-                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-violet-500 px-3 py-1 text-xs font-medium text-white shadow-lg shadow-violet-500/30">
+                      <span className="bg-brand shadow-brand/30 absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-medium text-black shadow-lg">
                         Le plus populaire
                       </span>
                     )}
@@ -86,7 +86,7 @@ export function PricingSection({ plans }: PricingSectionProps) {
                     <ul className="flex flex-1 flex-col gap-2.5 text-sm text-neutral-300">
                       {planFeatureLines(plan).map((line) => (
                         <li key={line} className="flex items-start gap-2">
-                          <Check className="mt-0.5 size-4 shrink-0 text-violet-300" />
+                          <Check className="text-brand-bright mt-0.5 size-4 shrink-0" />
                           {line}
                         </li>
                       ))}
@@ -96,7 +96,7 @@ export function PricingSection({ plans }: PricingSectionProps) {
                       asChild
                       className={cn(
                         highlighted
-                          ? "bg-violet-500 text-white shadow-lg shadow-violet-500/30 hover:bg-violet-400"
+                          ? "bg-brand shadow-brand/30 hover:bg-brand-bright text-black shadow-lg"
                           : "border border-white/15 bg-white/5 text-white hover:bg-white/10",
                       )}
                     >

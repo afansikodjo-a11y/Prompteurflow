@@ -11,32 +11,29 @@ export function HeroSection() {
       {/* Halo d'ambiance en fond de scène — fixe, pas un asset. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute top-[-10%] left-1/2 -z-10 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-violet-700/20 blur-[120px]"
+        className="bg-brand/15 pointer-events-none absolute top-[-10%] left-1/2 -z-10 h-[600px] w-[900px] -translate-x-1/2 rounded-full blur-[120px]"
       />
 
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-16 pb-20 sm:pt-24 sm:pb-28 lg:grid-cols-2 lg:gap-16">
         <div className="flex flex-col items-start gap-6">
           <Reveal>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-300">
+            <span className="border-brand/30 bg-brand/10 text-brand-bright inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium">
               <Sparkles className="size-3.5" />
-              Prompteur + caméra, un seul appareil
+              Ton script, ta caméra, un seul appareil
             </span>
           </Reveal>
 
           <Reveal delay={0.05}>
             <h1 className="text-4xl font-bold tracking-tight text-balance text-white sm:text-5xl lg:text-6xl">
-              Créez vos vidéos sans{" "}
-              <span className="bg-gradient-to-r from-violet-400 to-violet-200 bg-clip-text text-transparent">
-                mémoriser vos scripts
-              </span>
-              .
+              Ton script. Ta caméra.{" "}
+              <span className="text-brand-bright">Un seul appareil.</span>
             </h1>
           </Reveal>
 
           <Reveal delay={0.1}>
             <p className="max-w-xl text-lg text-pretty text-neutral-400 sm:text-xl">
-              Lisez votre script et filmez votre vidéo en même temps, depuis votre téléphone,
-              votre tablette ou votre ordinateur.
+              Lis ton script et enregistre directement ta vidéo avec ton téléphone, ta tablette
+              ou ton ordinateur. Sans mémoriser. Sans deuxième appareil.
             </p>
           </Reveal>
 
@@ -45,10 +42,10 @@ export function HeroSection() {
               <Button
                 asChild
                 size="lg"
-                className="gap-2 bg-violet-500 text-white shadow-lg shadow-violet-500/30 hover:bg-violet-400"
+                className="bg-brand shadow-brand/30 hover:bg-brand-bright gap-2 text-black shadow-lg"
               >
                 <Link href="/studio">
-                  Commencer gratuitement
+                  Créer ma première vidéo
                   <ArrowRight className="size-4" />
                 </Link>
               </Button>
@@ -68,16 +65,14 @@ export function HeroSection() {
 
           <Reveal delay={0.2}>
             <p className="text-sm text-neutral-500">
-              Aucune carte bancaire nécessaire · Utilisable directement dans votre navigateur.
+              Téléphone · Tablette · Ordinateur — pas de deuxième appareil, pas de mémorisation
+              obligatoire.
             </p>
           </Reveal>
         </div>
 
         <Reveal delay={0.15} className="relative mx-auto w-full max-w-sm lg:max-w-md">
-          <div
-            aria-hidden
-            className="absolute inset-6 -z-10 rounded-full bg-violet-600/30 blur-[80px]"
-          />
+          <div aria-hidden className="bg-brand/25 absolute inset-6 -z-10 rounded-full blur-[80px]" />
           <div className="relative aspect-square overflow-hidden rounded-[2rem] shadow-2xl ring-1 ring-white/10">
             <Image
               src="/images/hero-recording.png"

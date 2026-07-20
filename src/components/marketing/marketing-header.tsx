@@ -27,7 +27,7 @@ export function MarketingHeader() {
     <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-neutral-950/70 backdrop-blur-lg">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 font-semibold text-white">
-          <Clapperboard className="size-5 text-violet-400" />
+          <Clapperboard className="text-brand-bright size-5" />
           {siteConfig.name}
         </Link>
 
@@ -51,7 +51,7 @@ export function MarketingHeader() {
           <Button
             asChild
             size="sm"
-            className="bg-violet-500 text-white shadow-lg shadow-violet-500/20 hover:bg-violet-400"
+            className="bg-brand shadow-brand/20 hover:bg-brand-bright text-black shadow-lg"
           >
             <Link href="/studio">Commencer gratuitement</Link>
           </Button>
@@ -87,7 +87,7 @@ export function MarketingHeader() {
           >
             Connexion
           </Link>
-          <Button asChild className="mt-3 bg-violet-500 text-white hover:bg-violet-400">
+          <Button asChild className="bg-brand hover:bg-brand-bright mt-3 text-black">
             <Link href="/studio" onClick={() => setMenuOpen(false)}>
               Commencer gratuitement
             </Link>
