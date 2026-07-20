@@ -1,8 +1,8 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, PlayCircle, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { PrompterMockup } from "./mockup/prompter-mockup";
 import { Reveal } from "./reveal";
 
 export function HeroSection() {
@@ -73,8 +73,21 @@ export function HeroSection() {
           </Reveal>
         </div>
 
-        <Reveal delay={0.15} className="mx-auto w-full max-w-xs lg:max-w-sm">
-          <PrompterMockup glow />
+        <Reveal delay={0.15} className="relative mx-auto w-full max-w-sm lg:max-w-md">
+          <div
+            aria-hidden
+            className="absolute inset-6 -z-10 rounded-full bg-violet-600/30 blur-[80px]"
+          />
+          <div className="relative aspect-square overflow-hidden rounded-[2rem] shadow-2xl ring-1 ring-white/10">
+            <Image
+              src="/images/hero-recording.png"
+              alt="Une personne filme une vidéo avec son téléphone sur trépied, le script PrompteurFlow défilant à l'écran pendant l'enregistrement."
+              fill
+              priority
+              sizes="(min-width: 1024px) 448px, (min-width: 640px) 384px, 90vw"
+              className="object-cover"
+            />
+          </div>
         </Reveal>
       </div>
     </section>
