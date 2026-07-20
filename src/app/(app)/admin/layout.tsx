@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 
+import { AdminNav } from "./admin-nav";
+
 /**
  * Garde d'accès admin — Server Component (seule dérogation à la convention
  * `"use client"` du projet) : seul un check serveur empêche le HTML/JS de
@@ -20,5 +22,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   if (profile?.role !== "admin") redirect("/studio");
 
-  return <>{children}</>;
+  return (
+    <>
+      <AdminNav />
+      {children}
+    </>
+  );
 }
