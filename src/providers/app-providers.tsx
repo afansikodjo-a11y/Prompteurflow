@@ -11,7 +11,11 @@ import { AuthProvider } from "@/features/auth";
  */
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    // Thème forcé en sombre (`.dark`) : la landing marketing est déjà fixe
+    // en sombre+vert, et le reste de l'app (studio, admin, login…) doit
+    // s'aligner sur la même direction artistique — plus de bascule clair/
+    // sombre à proposer, voir `ModeToggle` retiré de `SiteHeader`.
+    <ThemeProvider attribute="class" forcedTheme="dark" disableTransitionOnChange>
       <AuthProvider>{children}</AuthProvider>
     </ThemeProvider>
   );
