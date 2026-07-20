@@ -142,10 +142,13 @@ function RollButton({
       <Button
         type="button"
         onClick={onStop}
-        className="gap-2 bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600/40"
+        aria-label="Arrêter"
+        className="gap-2 bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600/40 short-landscape:size-9 short-landscape:p-0"
       >
         <Square className="size-3.5 fill-current" />
-        Arrêter
+        {/* Icône seule en paysage court : chaque pixel compte pour la taille du
+            texte du prompteur quand le téléphone est loin du sujet filmé. */}
+        <span className="short-landscape:hidden">Arrêter</span>
       </Button>
     );
   }
