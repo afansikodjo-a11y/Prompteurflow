@@ -439,8 +439,19 @@ export function Studio() {
         )}
       </div>
 
-      {/* Barre de contrôles — en bas (portrait), sur le côté droit (paysage court) */}
-      <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 shrink-0 border-t backdrop-blur short-landscape:w-80 short-landscape:overflow-y-auto short-landscape:border-t-0 short-landscape:border-l">
+      {/* Barre de contrôles — en bas (portrait), sur le côté droit (paysage court).
+          Largeur figée à 320px seulement hors tournage : pendant l'enregistrement,
+          son contenu se réduit à Arrêter/Pause (voir plus bas), donc elle doit
+          rétrécir à son contenu pour rendre l'espace libéré à la scène vidéo —
+          même logique que le rétrécissement déjà en place pour la barre du bas
+          en portrait. */}
+      <div
+        className={cn(
+          "bg-background/95 supports-[backdrop-filter]:bg-background/80 shrink-0 border-t backdrop-blur short-landscape:overflow-y-auto short-landscape:border-t-0 short-landscape:border-l",
+          isRecording || countdown.isCounting ? "short-landscape:w-auto" : "short-landscape:w-80",
+        )}
+      >
+
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-4">
           <div
             className={cn(
