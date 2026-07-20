@@ -15,7 +15,7 @@ export function HeroSection() {
       />
 
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-16 pb-20 sm:pt-24 sm:pb-28 lg:grid-cols-2 lg:gap-16">
-        <div className="flex flex-col items-start gap-6">
+        <div className="flex flex-col items-center gap-6 text-center lg:items-start lg:text-left">
           <Reveal>
             <span className="border-brand/30 bg-brand/10 text-brand-bright inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium">
               <Sparkles className="size-3.5" />
@@ -38,7 +38,7 @@ export function HeroSection() {
           </Reveal>
 
           <Reveal delay={0.15}>
-            <div className="flex flex-wrap items-center gap-3 pt-2">
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2 lg:justify-start">
               <Button
                 asChild
                 size="lg"

@@ -59,7 +59,7 @@ export function FeatureShowcase() {
           delay={0.05}
           className="border-brand/20 mt-12 grid items-center gap-8 overflow-hidden rounded-3xl border bg-gradient-to-br from-white/[0.04] to-transparent p-8 sm:p-10 lg:grid-cols-[1.1fr_0.9fr]"
         >
-          <div>
+          <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
             <div className="border-brand/25 bg-brand/10 flex size-11 items-center justify-center rounded-xl border">
               <Layout className="text-brand-bright size-5" />
             </div>
@@ -78,7 +78,11 @@ export function FeatureShowcase() {
 
         <div className="mt-6 grid gap-px overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.06] sm:grid-cols-2 lg:grid-cols-3">
           {SECONDARY_FEATURES.map(({ icon: Icon, title, description }, index) => (
-            <Reveal key={title} delay={index * 0.04} className="bg-neutral-950 p-6">
+            <Reveal
+              key={title}
+              delay={index * 0.04}
+              className="flex flex-col items-center bg-neutral-950 p-6 text-center sm:items-start sm:text-left"
+            >
               <Icon className="text-brand-bright size-5" />
               <h3 className="mt-3 text-sm font-semibold text-white">{title}</h3>
               <p className="mt-1.5 text-xs text-pretty text-neutral-400">{description}</p>

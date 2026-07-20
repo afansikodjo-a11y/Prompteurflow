@@ -50,7 +50,7 @@ export function AudienceSection() {
             <Reveal
               key={title}
               delay={index * 0.05}
-              className="h-full rounded-2xl border border-white/10 bg-white/[0.03] p-6"
+              className="flex h-full flex-col items-center rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center sm:items-start sm:text-left"
             >
               <div className="border-brand/25 bg-brand/10 flex size-10 items-center justify-center rounded-full border">
                 <Icon className="text-brand-bright size-4.5" />
