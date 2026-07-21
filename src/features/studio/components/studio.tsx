@@ -33,6 +33,7 @@ import { siteConfig } from "@/config/site";
 import { useCountdown } from "@/hooks/use-countdown";
 import { useFullscreen } from "@/hooks/use-fullscreen";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { AiWriterDialog } from "@/features/ai-writer";
 import {
   CameraPreview,
   CaptureSettingsSheet,
@@ -479,6 +480,15 @@ export function Studio() {
                   canImport={plan.scriptImport}
                   onImport={(file) => void handleImportScript(file)}
                   onImportLocked={() => setUpgradeReason("import")}
+                />
+                <AiWriterDialog
+                  existingContent={currentScript?.content ?? ""}
+                  onApply={(content) => currentScript && scriptsState.updateContent(currentScript.id, content)}
+                  onApplyAsNew={(content) => {
+                    if (scriptsState.create({ title: "Script IA", content }) === null) {
+                      setUpgradeReason("scripts");
+                    }
+                  }}
                 />
                 <RecordingsLibrary
                   recordings={recordings.recordings}
