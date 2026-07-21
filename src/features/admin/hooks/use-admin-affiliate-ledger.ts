@@ -9,6 +9,9 @@ export interface UseAdminAffiliateLedgerResult {
   rows: AdminAffiliateRow[];
   loading: boolean;
   markPaid: (affiliateId: string) => Promise<void>;
+  revoke: (affiliateId: string) => Promise<void>;
+  /** Active le programme pour le compte correspondant à cet email — sur demande, pas automatique. */
+  grantByEmail: (email: string) => Promise<{ error: string | null }>;
 }
 
 interface CommissionRow {
@@ -18,9 +21,9 @@ interface CommissionRow {
 }
 
 /**
- * Un affilié par ligne : filleuls, gains en attente/versés. Agrégation en
- * TypeScript plutôt qu'en SQL (même style que `getRevenueSummary()`) —
- * délibérément minimal, V1 bas volume.
+ * Un affilié activé par ligne (`profiles.is_affiliate = true`) : filleuls,
+ * gains en attente/versés. Agrégation en TypeScript plutôt qu'en SQL (même
+ * style que `getRevenueSummary()`) — délibérément minimal, V1 bas volume.
  */
 export function useAdminAffiliateLedger(): UseAdminAffiliateLedgerResult {
   const [rows, setRows] = React.useState<AdminAffiliateRow[]>([]);
@@ -29,7 +32,8 @@ export function useAdminAffiliateLedger(): UseAdminAffiliateLedgerResult {
   const refresh = React.useCallback(async () => {
     const supabase = createClient();
 
-    const [{ data: referredProfiles }, { data: commissions }] = await Promise.all([
+    const [{ data: affiliateProfiles }, { data: referredProfiles }, { data: commissions }] = await Promise.all([
+      supabase.from("profiles").select("id, email").eq("is_affiliate", true),
       supabase.from("profiles").select("referred_by").not("referred_by", "is", null),
       supabase.from("affiliate_commissions").select("affiliate_id, amount_xof, status"),
     ]);
@@ -47,18 +51,6 @@ export function useAdminAffiliateLedger(): UseAdminAffiliateLedgerResult {
       if (row.status === "paid") entry.paid += row.amount_xof;
       totals.set(row.affiliate_id, entry);
     }
-
-    const affiliateIds = new Set([...referredCounts.keys(), ...totals.keys()]);
-    if (affiliateIds.size === 0) {
-      setRows([]);
-      setLoading(false);
-      return;
-    }
-
-    const { data: affiliateProfiles } = await supabase
-      .from("profiles")
-      .select("id, email")
-      .in("id", Array.from(affiliateIds));
 
     const result: AdminAffiliateRow[] = (affiliateProfiles ?? []).map((profile) => {
       const totalsEntry = totals.get(profile.id) ?? { accrued: 0, paid: 0 };
@@ -93,5 +85,39 @@ export function useAdminAffiliateLedger(): UseAdminAffiliateLedgerResult {
     [refresh],
   );
 
-  return { rows, loading, markPaid };
+  const revoke = React.useCallback(
+    async (affiliateId: string) => {
+      const supabase = createClient();
+      await supabase.from("profiles").update({ is_affiliate: false }).eq("id", affiliateId);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const grantByEmail = React.useCallback(
+    async (email: string): Promise<{ error: string | null }> => {
+      const supabase = createClient();
+      const trimmed = email.trim();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", trimmed)
+        .maybeSingle();
+
+      if (!profile) {
+        return { error: "Aucun compte trouvé avec cet email." };
+      }
+
+      const { error } = await supabase.from("profiles").update({ is_affiliate: true }).eq("id", profile.id);
+      if (error) {
+        return { error: "Impossible d'activer l'affiliation pour ce compte." };
+      }
+
+      await refresh();
+      return { error: null };
+    },
+    [refresh],
+  );
+
+  return { rows, loading, markPaid, revoke, grantByEmail };
 }

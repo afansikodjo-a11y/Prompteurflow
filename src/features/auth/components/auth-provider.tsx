@@ -9,13 +9,18 @@ import type { AuthUser, UseAuthResult } from "../types";
 
 export const AuthContext = React.createContext<UseAuthResult | null>(null);
 
-/** Résout le rôle (`profiles.role`) de l'utilisateur authentifié. */
+/** Résout le rôle et le statut d'affiliation (`profiles`) de l'utilisateur authentifié. */
 async function loadProfile(supabase: SupabaseClient, authUser: User): Promise<AuthUser> {
-  const { data } = await supabase.from("profiles").select("role").eq("id", authUser.id).single();
+  const { data } = await supabase
+    .from("profiles")
+    .select("role, is_affiliate")
+    .eq("id", authUser.id)
+    .single();
   return {
     id: authUser.id,
     email: authUser.email ?? "",
     role: data?.role === "admin" ? "admin" : "user",
+    isAffiliate: data?.is_affiliate ?? false,
   };
 }
 

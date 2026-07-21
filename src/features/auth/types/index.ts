@@ -7,6 +7,8 @@ export interface AuthUser {
   id: string;
   email: string;
   role: "user" | "admin";
+  /** Programme d'affiliation activé pour ce compte (sur demande, par un admin). */
+  isAffiliate: boolean;
 }
 
 export interface UseAuthResult {

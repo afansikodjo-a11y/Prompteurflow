@@ -1,19 +1,22 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
-import { useAdminAffiliateLedger } from "../hooks/use-admin-affiliate-ledger";
+import type { AdminAffiliateRow } from "../types";
+
+interface AffiliateLedgerTableProps {
+  rows: AdminAffiliateRow[];
+  loading: boolean;
+  onMarkPaid: (affiliateId: string) => void;
+  onRevoke: (affiliateId: string) => void;
+}
 
 function formatXof(amount: number): string {
   return `${amount.toLocaleString("fr-FR")} XOF`;
 }
 
-/** Un affilié par ligne — filleuls, gains en attente/versés, marquage payé manuel. */
-export function AffiliateLedgerTable() {
-  const { rows, loading, markPaid } = useAdminAffiliateLedger();
-
+/** Un affilié activé par ligne — filleuls, gains en attente/versés, marquage payé et désactivation. */
+export function AffiliateLedgerTable({ rows, loading, onMarkPaid, onRevoke }: AffiliateLedgerTableProps) {
   if (loading) return <p className="text-muted-foreground text-sm">Chargement…</p>;
   if (rows.length === 0) {
-    return <p className="text-muted-foreground text-sm">Aucun affilié pour l&apos;instant.</p>;
+    return <p className="text-muted-foreground text-sm">Aucun compte activé pour l&apos;instant.</p>;
   }
 
   return (
@@ -36,11 +39,16 @@ export function AffiliateLedgerTable() {
               <td className="py-2 tabular-nums">{formatXof(row.accruedTotalXof)}</td>
               <td className="py-2 tabular-nums">{formatXof(row.paidTotalXof)}</td>
               <td className="py-2 text-right">
-                {row.accruedTotalXof > 0 && (
-                  <Button type="button" size="sm" variant="outline" onClick={() => void markPaid(row.affiliateId)}>
-                    Marquer payé
+                <div className="flex justify-end gap-2">
+                  {row.accruedTotalXof > 0 && (
+                    <Button type="button" size="sm" variant="outline" onClick={() => onMarkPaid(row.affiliateId)}>
+                      Marquer payé
+                    </Button>
+                  )}
+                  <Button type="button" size="sm" variant="ghost" onClick={() => onRevoke(row.affiliateId)}>
+                    Désactiver
                   </Button>
-                )}
+                </div>
               </td>
             </tr>
           ))}

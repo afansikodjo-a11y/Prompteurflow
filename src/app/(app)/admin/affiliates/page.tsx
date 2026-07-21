@@ -1,22 +1,18 @@
-import { AffiliateLedgerTable, AffiliateRateForm } from "@/features/admin";
+import { AffiliateAdminPanel, AffiliateRateForm } from "@/features/admin";
 
 /**
- * Panneau admin — programme d'affiliation : taux global + suivi des
- * versements. Accès protégé par `layout.tsx` (garde serveur + RLS).
+ * Panneau admin — programme d'affiliation sur demande : taux global,
+ * activation par email, suivi des versements. Accès protégé par
+ * `layout.tsx` (garde serveur + RLS).
  */
 export default function AdminAffiliatesPage() {
   return (
     <section className="mx-auto max-w-3xl px-4 py-16">
       <h1 className="text-3xl font-bold tracking-tight">Affiliation</h1>
-      <p className="text-muted-foreground mt-2">Taux de commission et suivi des versements.</p>
+      <p className="text-muted-foreground mt-2">Programme sur demande — taux de commission et comptes activés.</p>
       <div className="mt-8 flex flex-col gap-6">
         <AffiliateRateForm />
-        <div>
-          <h2 className="font-semibold">Affiliés</h2>
-          <div className="mt-3">
-            <AffiliateLedgerTable />
-          </div>
-        </div>
+        <AffiliateAdminPanel />
       </div>
     </section>
   );

@@ -38,12 +38,14 @@ export function UserMenu() {
 
   return (
     <div className="flex items-center gap-2">
-      <Button asChild variant="ghost" size="sm">
-        <Link href="/affiliation">
-          <Gift className="size-4" />
-          Affiliation
-        </Link>
-      </Button>
+      {user.isAffiliate && (
+        <Button asChild variant="ghost" size="sm">
+          <Link href="/affiliation">
+            <Gift className="size-4" />
+            Affiliation
+          </Link>
+        </Button>
+      )}
       {user.role === "admin" && (
         <Button asChild variant="ghost" size="sm">
           <Link href="/admin">
