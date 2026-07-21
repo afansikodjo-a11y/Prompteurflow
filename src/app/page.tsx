@@ -22,6 +22,17 @@ export const metadata: Metadata = {
     "Prompteur Flow est un prompteur vidéo qui fait défiler votre script pendant que vous filmez, depuis ton téléphone, ta tablette ou ton ordinateur. Écris ton script, importe-le, ou laisse l'IA le rédiger pour toi. Ton script. Ta caméra. Un seul appareil.",
 };
 
+// `getAllPlansServer()` appelle déjà `cookies()` (via le client Supabase
+// serveur), ce qui suffit à rendre cette page dynamique — mais pas à
+// empêcher Next de mettre en cache la requête Supabase elle-même (le Data
+// Cache est une couche distincte du rendu dynamique). Sans ce `force-dynamic`
+// explicite, un prix ou une fonctionnalité modifiés dans /admin/plans
+// pouvaient continuer à afficher l'ancienne valeur sur la landing jusqu'à un
+// prochain déploiement. Aucun coût de performance supplémentaire : la page
+// était déjà rendue dynamiquement à chaque requête dès que `pricingVisible`
+// est actif.
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const plans = FEATURE_FLAGS.pricingVisible ? await getAllPlansServer() : [];
 
