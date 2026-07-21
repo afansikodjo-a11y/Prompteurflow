@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
 
@@ -7,6 +10,8 @@ import { BASIC_PLAN_ID, STANDARD_PLAN_ID, type Plan } from "@/features/subscript
 import { Reveal } from "./reveal";
 
 const XOF_FORMATTER = new Intl.NumberFormat("fr-FR");
+
+type BillingPeriod = "monthly" | "annual";
 
 function formatPrice(priceXof: number): string {
   return priceXof === 0 ? "Gratuit" : `${XOF_FORMATTER.format(priceXof)} FCFA`;
@@ -32,11 +37,28 @@ function ctaForPlan(plan: Plan): { href: string; label: string } {
   return { href: "/signup", label: "Créer un compte" };
 }
 
+/**
+ * Prix à afficher pour un plan selon la période choisie. Replie sur le
+ * mensuel si le plan n'a pas de palier annuel (ex. Basique, gratuit) — le
+ * bouton mensuel/annuel n'a alors aucun effet visuel sur cette carte.
+ */
+function resolvePrice(plan: Plan, period: BillingPeriod) {
+  const useAnnual = period === "annual" && plan.annualPriceXof !== null;
+  return {
+    amount: useAnnual ? plan.annualPriceXof! : plan.priceXof,
+    barred: useAnnual ? plan.annualPriceBarredXof : plan.priceBarredXof,
+    suffix: useAnnual ? " / an" : " / mois",
+  };
+}
+
 interface PricingSectionProps {
   plans: Plan[];
 }
 
 export function PricingSection({ plans }: PricingSectionProps) {
+  const [period, setPeriod] = React.useState<BillingPeriod>("monthly");
+  const hasAnnualOption = plans.some((plan) => plan.annualPriceXof !== null);
+
   return (
     <section id="pricing" className="border-t border-white/[0.06] bg-neutral-950 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4">
@@ -49,6 +71,35 @@ export function PricingSection({ plans }: PricingSectionProps) {
           </p>
         </Reveal>
 
+        {hasAnnualOption && (
+          <Reveal delay={0.05} className="mt-8 flex justify-center">
+            <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
+              <button
+                type="button"
+                onClick={() => setPeriod("monthly")}
+                aria-pressed={period === "monthly"}
+                className={cn(
+                  "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                  period === "monthly" ? "bg-brand text-black" : "text-neutral-400 hover:text-white",
+                )}
+              >
+                Mensuel
+              </button>
+              <button
+                type="button"
+                onClick={() => setPeriod("annual")}
+                aria-pressed={period === "annual"}
+                className={cn(
+                  "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                  period === "annual" ? "bg-brand text-black" : "text-neutral-400 hover:text-white",
+                )}
+              >
+                Annuel
+              </button>
+            </div>
+          </Reveal>
+        )}
+
         {plans.length === 0 ? (
           <p className="mt-12 text-center text-sm text-neutral-500">
             Les tarifs sont momentanément indisponibles — réessayez dans un instant.
@@ -58,6 +109,8 @@ export function PricingSection({ plans }: PricingSectionProps) {
             {plans.map((plan, index) => {
               const highlighted = plan.id === STANDARD_PLAN_ID;
               const cta = ctaForPlan(plan);
+              const price = resolvePrice(plan, period);
+              const showBarred = price.barred !== null && price.barred > price.amount;
               return (
                 <Reveal key={plan.id} delay={index * 0.08}>
                   <div
@@ -75,11 +128,14 @@ export function PricingSection({ plans }: PricingSectionProps) {
                     )}
                     <div>
                       <h3 className="font-semibold text-white">{plan.name}</h3>
-                      <p className="mt-2">
+                      <p className="mt-2 flex flex-wrap items-baseline gap-2">
+                        {showBarred && (
+                          <span className="text-lg text-neutral-500 line-through">{formatPrice(price.barred!)}</span>
+                        )}
                         <span className="text-3xl font-bold tracking-tight text-white">
-                          {formatPrice(plan.priceXof)}
+                          {formatPrice(price.amount)}
                         </span>
-                        {plan.priceXof > 0 && <span className="text-sm text-neutral-500"> / mois</span>}
+                        {price.amount > 0 && <span className="text-sm text-neutral-500">{price.suffix}</span>}
                       </p>
                     </div>
 

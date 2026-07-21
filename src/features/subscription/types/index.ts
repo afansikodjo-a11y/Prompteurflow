@@ -9,8 +9,14 @@ export type PlanId = "basic" | "standard" | "pro";
 export interface Plan {
   id: PlanId;
   name: string;
-  /** Prix en francs CFA (XOF), montant entier (pas de sous-unité). */
+  /** Prix mensuel en francs CFA (XOF), montant entier (pas de sous-unité). */
   priceXof: number;
+  /** Prix mensuel barré (avant promo) ; `null` = aucun prix barré affiché. */
+  priceBarredXof: number | null;
+  /** Prix annuel (XOF) ; `null` = pas de palier annuel proposé pour ce plan. */
+  annualPriceXof: number | null;
+  /** Prix annuel barré (avant promo) ; `null` = aucun prix barré affiché. */
+  annualPriceBarredXof: number | null;
   /** Durée max d'un clip, en secondes ; `null` = illimité. */
   maxDurationSec: number | null;
   /** Nombre max de scripts sauvegardés ; `null` = illimité. */

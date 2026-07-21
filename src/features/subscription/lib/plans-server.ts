@@ -7,6 +7,9 @@ interface PlanRow {
   id: PlanId;
   name: string;
   price_xof: number;
+  price_barred_xof: number | null;
+  annual_price_xof: number | null;
+  annual_price_barred_xof: number | null;
   max_duration_sec: number | null;
   max_scripts: number | null;
   watermark: boolean;
@@ -15,13 +18,16 @@ interface PlanRow {
 }
 
 const COLUMNS =
-  "id, name, price_xof, max_duration_sec, max_scripts, watermark, unlocked_filters, script_import";
+  "id, name, price_xof, price_barred_xof, annual_price_xof, annual_price_barred_xof, max_duration_sec, max_scripts, watermark, unlocked_filters, script_import";
 
 function rowToPlan(row: PlanRow): Plan {
   return {
     id: row.id,
     name: row.name,
     priceXof: row.price_xof,
+    priceBarredXof: row.price_barred_xof,
+    annualPriceXof: row.annual_price_xof,
+    annualPriceBarredXof: row.annual_price_barred_xof,
     maxDurationSec: row.max_duration_sec,
     maxScripts: row.max_scripts,
     watermark: row.watermark,

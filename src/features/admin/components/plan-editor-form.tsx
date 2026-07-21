@@ -96,6 +96,53 @@ function PlanCard({ plan, onSave }: PlanCardProps) {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor={`price-barred-${plan.id}`}>Prix mensuel barré — vide = aucun</Label>
+          <Input
+            id={`price-barred-${plan.id}`}
+            type="number"
+            min={0}
+            step={1}
+            value={draft.priceBarredXof ?? ""}
+            onChange={(event) => {
+              setSaved(false);
+              setDraft((current) => ({ ...current, priceBarredXof: parseLimit(event.target.value) }));
+            }}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor={`annual-price-${plan.id}`}>Prix annuel (XOF) — vide = pas de palier annuel</Label>
+          <Input
+            id={`annual-price-${plan.id}`}
+            type="number"
+            min={0}
+            step={1}
+            value={draft.annualPriceXof ?? ""}
+            onChange={(event) => {
+              setSaved(false);
+              setDraft((current) => ({ ...current, annualPriceXof: parseLimit(event.target.value) }));
+            }}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor={`annual-price-barred-${plan.id}`}>Prix annuel barré — vide = aucun</Label>
+          <Input
+            id={`annual-price-barred-${plan.id}`}
+            type="number"
+            min={0}
+            step={1}
+            value={draft.annualPriceBarredXof ?? ""}
+            onChange={(event) => {
+              setSaved(false);
+              setDraft((current) => ({ ...current, annualPriceBarredXof: parseLimit(event.target.value) }));
+            }}
+          />
+        </div>
+      </div>
+
       <div className="flex flex-wrap gap-4">
         <Label className="w-fit">
           <input
