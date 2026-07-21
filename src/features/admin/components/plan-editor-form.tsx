@@ -167,6 +167,18 @@ function PlanCard({ plan, onSave }: PlanCardProps) {
           />
           Import de script (.txt)
         </Label>
+
+        <Label className="w-fit">
+          <input
+            type="checkbox"
+            checked={draft.aiWriter}
+            onChange={(event) => {
+              setSaved(false);
+              setDraft((current) => ({ ...current, aiWriter: event.target.checked }));
+            }}
+          />
+          Rédaction IA (générer/améliorer un script)
+        </Label>
       </div>
 
       <div className="flex flex-col gap-1.5">

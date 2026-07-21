@@ -62,7 +62,7 @@ import {
 } from "@/features/teleprompter";
 
 /** Raison de la relance d'upgrade affichée à l'utilisateur (plan Basique). */
-type UpgradeReason = "filter" | "scripts" | "duration" | "import" | null;
+type UpgradeReason = "filter" | "scripts" | "duration" | "import" | "aiWriter" | null;
 
 const UPGRADE_MESSAGES: Record<Exclude<UpgradeReason, null>, { title: string; description: string }> = {
   filter: {
@@ -80,6 +80,10 @@ const UPGRADE_MESSAGES: Record<Exclude<UpgradeReason, null>, { title: string; de
   import: {
     title: "Import de script réservé au plan Standard",
     description: "Passez au plan Standard pour importer un script depuis un fichier .txt.",
+  },
+  aiWriter: {
+    title: "Rédaction IA réservée au plan Pro",
+    description: "Passez au plan Pro pour générer ou améliorer vos scripts avec l'assistant IA.",
   },
 };
 
@@ -489,6 +493,8 @@ export function Studio() {
                       setUpgradeReason("scripts");
                     }
                   }}
+                  canUse={plan.aiWriter}
+                  onLocked={() => setUpgradeReason("aiWriter")}
                 />
                 <RecordingsLibrary
                   recordings={recordings.recordings}

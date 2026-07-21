@@ -15,10 +15,11 @@ interface PlanRow {
   watermark: boolean;
   unlocked_filters: string[];
   script_import: boolean;
+  ai_writer: boolean;
 }
 
 const COLUMNS =
-  "id, name, price_xof, price_barred_xof, annual_price_xof, annual_price_barred_xof, max_duration_sec, max_scripts, watermark, unlocked_filters, script_import";
+  "id, name, price_xof, price_barred_xof, annual_price_xof, annual_price_barred_xof, max_duration_sec, max_scripts, watermark, unlocked_filters, script_import, ai_writer";
 
 function rowToPlan(row: PlanRow): Plan {
   return {
@@ -33,6 +34,7 @@ function rowToPlan(row: PlanRow): Plan {
     watermark: row.watermark,
     unlockedFilters: row.unlocked_filters as Plan["unlockedFilters"],
     scriptImport: row.script_import,
+    aiWriter: row.ai_writer,
   };
 }
 

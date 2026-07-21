@@ -28,6 +28,7 @@ function planFeatureLines(plan: Plan): string[] {
     plan.watermark ? "Filigrane à l'export" : "Aucun filigrane",
   ];
   if (plan.scriptImport) lines.push("Import de script depuis un fichier (.txt)");
+  if (plan.aiWriter) lines.push("Rédaction et amélioration de script par IA");
   return lines;
 }
 

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { Lock, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,6 +25,10 @@ interface AiWriterDialogProps {
   onApply: (content: string) => void;
   /** Enregistre le résultat comme nouveau script (double comme « annuler » sans perte). */
   onApplyAsNew: (content: string) => void;
+  /** Réservé au plan Pro (`plan.aiWriter`) — même pattern que `canImport` sur `ScriptsLibrary`. */
+  canUse: boolean;
+  /** Appelé au clic sur le déclencheur quand `canUse` est faux, à la place de l'ouverture du dialogue. */
+  onLocked: () => void;
 }
 
 type DialogMode = "generate" | "improve";
@@ -39,7 +42,7 @@ const UNSET = "__unset__";
  * automatiquement : toujours un clic explicite (Remplacer / Nouveau script)
  * entre la réponse de l'IA et une vraie modification du script.
  */
-export function AiWriterDialog({ existingContent, onApply, onApplyAsNew }: AiWriterDialogProps) {
+export function AiWriterDialog({ existingContent, onApply, onApplyAsNew, canUse, onLocked }: AiWriterDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [mode, setMode] = React.useState<DialogMode>("generate");
   const [topic, setTopic] = React.useState("");
@@ -91,12 +94,15 @@ export function AiWriterDialog({ existingContent, onApply, onApplyAsNew }: AiWri
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button type="button" variant="outline" className="gap-2">
-          <Sparkles className="size-4" />
-          Écrire avec l&apos;IA
-        </Button>
-      </DialogTrigger>
+      <Button
+        type="button"
+        variant="outline"
+        className="gap-2"
+        onClick={() => (canUse ? setOpen(true) : onLocked())}
+      >
+        {canUse ? <Sparkles className="size-4" /> : <Lock className="size-4" />}
+        Écrire avec l&apos;IA
+      </Button>
 
       <DialogContent className="sm:max-w-lg">
         {writer.authLoading ? null : !writer.isAuthenticated ? (

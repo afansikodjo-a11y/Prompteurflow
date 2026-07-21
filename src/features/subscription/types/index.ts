@@ -27,4 +27,6 @@ export interface Plan {
   unlockedFilters: VideoFilterId[];
   /** Import de script depuis un fichier (.txt). */
   scriptImport: boolean;
+  /** Assistant IA d'écriture de script (génération/amélioration). */
+  aiWriter: boolean;
 }
