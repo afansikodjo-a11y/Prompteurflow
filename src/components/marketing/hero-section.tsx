@@ -78,9 +78,10 @@ export function HeroSection() {
           <div aria-hidden className="bg-brand/25 absolute inset-6 -z-10 rounded-full blur-[80px]" />
           <div className="relative aspect-square overflow-hidden rounded-[2rem] shadow-2xl ring-1 ring-white/10">
             <Image
-              src="/images/hero-recording.png"
+              src="/images/teleprompter.gif"
               alt="Une personne filme une vidéo avec son téléphone sur trépied, le script PrompteurFlow défilant à l'écran pendant l'enregistrement."
               fill
+              unoptimized
               priority
               sizes="(min-width: 1024px) 448px, (min-width: 640px) 384px, 90vw"
               className="object-cover"
