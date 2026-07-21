@@ -1,8 +1,9 @@
 "use client";
 
-import { Gauge, Pause, Play, Square, Type } from "lucide-react";
+import { Gauge, Minus, Pause, Play, Plus, Square, Type } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { ControlSlider } from "./control-slider";
 import { FONT_SIZE, SPEED } from "../constants";
 import type { PlaybackStatus } from "../types";
@@ -69,16 +70,48 @@ export function TeleprompterControls({
       </div>
 
       <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-6">
-        <ControlSlider
-          label="Vitesse"
-          icon={Gauge}
-          value={speed}
-          min={SPEED.min}
-          max={SPEED.max}
-          step={SPEED.step}
-          onValueChange={onSpeedChange}
-          formatValue={(value) => `${value} mots/min`}
-        />
+        <div className="flex flex-col gap-1.5">
+          <div className="text-muted-foreground flex items-center justify-between text-xs font-medium">
+            <span className="flex items-center gap-1.5">
+              <Gauge className="size-3.5" />
+              Vitesse
+            </span>
+            <span className="tabular-nums">{speed} mots/min</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              className="size-7 shrink-0"
+              onClick={() => onSpeedChange(Math.max(SPEED.min, speed - SPEED.step))}
+              disabled={speed <= SPEED.min}
+              aria-label="Ralentir"
+            >
+              <Minus className="size-3.5" />
+            </Button>
+            <Slider
+              value={[speed]}
+              min={SPEED.min}
+              max={SPEED.max}
+              step={SPEED.step}
+              onValueChange={(values) => onSpeedChange(values[0] ?? speed)}
+              aria-label="Vitesse"
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              className="size-7 shrink-0"
+              onClick={() => onSpeedChange(Math.min(SPEED.max, speed + SPEED.step))}
+              disabled={speed >= SPEED.max}
+              aria-label="Accélérer"
+            >
+              <Plus className="size-3.5" />
+            </Button>
+          </div>
+        </div>
         <ControlSlider
           label="Taille du texte"
           icon={Type}

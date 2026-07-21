@@ -8,9 +8,11 @@ import {
   FlipHorizontal2,
   Maximize2,
   Minimize2,
+  Minus,
   Pause,
   Pencil,
   Play,
+  Plus,
   Settings,
   Square,
   SwitchCamera,
@@ -513,18 +515,38 @@ export function Studio() {
                   onStop={handleStopRoll}
                 />
                 {rollState === "rolling" && (
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    onClick={handleTogglePauseRoll}
-                    aria-label={recorder.status === "recording" ? "Suspendre" : "Reprendre"}
-                  >
-                    {recorder.status === "recording" ? (
-                      <Pause className="size-4" />
-                    ) : (
-                      <Play className="size-4" />
-                    )}
-                  </Button>
+                  <>
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      onClick={() => prompter.adjustSpeed(-SPEED.step)}
+                      disabled={prompter.speed <= SPEED.min}
+                      aria-label="Ralentir le défilement"
+                    >
+                      <Minus className="size-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      onClick={handleTogglePauseRoll}
+                      aria-label={recorder.status === "recording" ? "Suspendre" : "Reprendre"}
+                    >
+                      {recorder.status === "recording" ? (
+                        <Pause className="size-4" />
+                      ) : (
+                        <Play className="size-4" />
+                      )}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      onClick={() => prompter.adjustSpeed(SPEED.step)}
+                      disabled={prompter.speed >= SPEED.max}
+                      aria-label="Accélérer le défilement"
+                    >
+                      <Plus className="size-4" />
+                    </Button>
+                  </>
                 )}
                 {hasClip && recorder.recordingUrl && (
                   <Button asChild variant="outline">
