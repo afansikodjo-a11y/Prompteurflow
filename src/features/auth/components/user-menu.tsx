@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Gift, LogOut, Shield } from "lucide-react";
+import { Gift, LogOut, Settings, Shield } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { FEATURE_FLAGS } from "@/config/flags";
@@ -38,6 +38,12 @@ export function UserMenu() {
 
   return (
     <div className="flex items-center gap-2">
+      <Button asChild variant="ghost" size="sm">
+        <Link href="/settings">
+          <Settings className="size-4" />
+          Paramètres
+        </Link>
+      </Button>
       {user.isAffiliate && (
         <Button asChild variant="ghost" size="sm">
           <Link href="/affiliation">
