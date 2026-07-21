@@ -1,43 +1,48 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "../hooks/use-auth";
 
-/** Formulaire de connexion (email + mot de passe). */
-export function LoginForm() {
-  const { signIn } = useAuth();
-  const router = useRouter();
+/** Demande d'email de réinitialisation de mot de passe. */
+export function ForgotPasswordForm() {
+  const { resetPasswordForEmail } = useAuth();
   const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
+  const [sent, setSent] = React.useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setSubmitting(true);
     setError(null);
-    const { error } = await signIn(email, password);
+    const { error } = await resetPasswordForEmail(email);
     setSubmitting(false);
     if (error) {
       setError(error);
       return;
     }
-    router.push("/studio");
-    router.refresh();
+    setSent(true);
   };
+
+  if (sent) {
+    return (
+      <p className="text-sm">
+        Si un compte existe avec cet email, un lien de réinitialisation vient d&apos;être envoyé — vérifiez votre
+        boîte mail.
+      </p>
+    );
+  }
 
   return (
     <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="login-email">Email</Label>
+        <Label htmlFor="forgot-email">Email</Label>
         <Input
-          id="login-email"
+          id="forgot-email"
           type="email"
           required
           autoComplete="email"
@@ -46,26 +51,9 @@ export function LoginForm() {
           className="h-11"
         />
       </div>
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="login-password">Mot de passe</Label>
-          <Link href="/mot-de-passe-oublie" className="text-muted-foreground text-xs underline">
-            Mot de passe oublié ?
-          </Link>
-        </div>
-        <Input
-          id="login-password"
-          type="password"
-          required
-          autoComplete="current-password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          className="h-11"
-        />
-      </div>
       {error && <p className="text-destructive text-sm">{error}</p>}
       <Button type="submit" size="lg" disabled={submitting} className="w-full">
-        {submitting ? "Connexion…" : "Se connecter"}
+        {submitting ? "Envoi…" : "Envoyer le lien"}
       </Button>
     </form>
   );

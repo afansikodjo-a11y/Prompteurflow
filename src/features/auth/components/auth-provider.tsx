@@ -4,7 +4,7 @@ import * as React from "react";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/client";
-import { signIn, signOut, signUp } from "../lib/auth-client";
+import { resetPasswordForEmail, signIn, signOut, signUp, updatePassword } from "../lib/auth-client";
 import type { AuthUser, UseAuthResult } from "../types";
 
 export const AuthContext = React.createContext<UseAuthResult | null>(null);
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = React.useMemo<UseAuthResult>(
-    () => ({ user, loading, signUp, signIn, signOut }),
+    () => ({ user, loading, signUp, signIn, signOut, resetPasswordForEmail, updatePassword }),
     [user, loading],
   );
 

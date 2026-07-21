@@ -9,11 +9,12 @@ import { Label } from "@/components/ui/label";
 import { MIN_PASSWORD_LENGTH } from "../constants";
 import { useAuth } from "../hooks/use-auth";
 
-/** Formulaire de création de compte (email + mot de passe). */
+/** Formulaire de création de compte (email + mot de passe + téléphone WhatsApp). */
 export function SignupForm() {
   const { signUp } = useAuth();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [phone, setPhone] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [done, setDone] = React.useState(false);
@@ -22,7 +23,7 @@ export function SignupForm() {
     event.preventDefault();
     setSubmitting(true);
     setError(null);
-    const { error } = await signUp(email, password);
+    const { error } = await signUp(email, password, phone.replace(/\D/g, ""));
     setSubmitting(false);
     if (error) {
       setError(error);
@@ -54,6 +55,19 @@ export function SignupForm() {
           autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
+          className="h-11"
+        />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="signup-phone">Numéro WhatsApp</Label>
+        <Input
+          id="signup-phone"
+          type="tel"
+          required
+          autoComplete="tel"
+          placeholder="Ex. 22890000000"
+          value={phone}
+          onChange={(event) => setPhone(event.target.value)}
           className="h-11"
         />
       </div>

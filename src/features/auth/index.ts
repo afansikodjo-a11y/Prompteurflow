@@ -3,7 +3,9 @@
  */
 export { AuthProvider } from "./components/auth-provider";
 export { AuthSplitPanel } from "./components/auth-split-panel";
+export { ForgotPasswordForm } from "./components/forgot-password-form";
 export { LoginForm } from "./components/login-form";
+export { ResetPasswordForm } from "./components/reset-password-form";
 export { SignupForm } from "./components/signup-form";
 export { UserMenu } from "./components/user-menu";
 export { useAuth } from "./hooks/use-auth";
