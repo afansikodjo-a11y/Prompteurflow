@@ -6,7 +6,8 @@ import { Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { BASIC_PLAN_ID, STANDARD_PLAN_ID, type Plan } from "@/features/subscription";
+import { useAuth } from "@/features/auth";
+import { BASIC_PLAN_ID, startCheckout, STANDARD_PLAN_ID, type Plan, type PlanId } from "@/features/subscription";
 import { Reveal } from "./reveal";
 
 const XOF_FORMATTER = new Intl.NumberFormat("fr-FR");
@@ -32,11 +33,6 @@ function planFeatureLines(plan: Plan): string[] {
   return lines;
 }
 
-/** Basique fonctionne sans compte ; les autres paliers passent par l'inscription (le paiement n'est pas encore en ligne). */
-function ctaForPlan(plan: Plan): { href: string; label: string } {
-  if (plan.id === BASIC_PLAN_ID) return { href: "/studio", label: "Commencer gratuitement" };
-  return { href: "/signup", label: "Créer un compte" };
-}
 
 /**
  * Prix à afficher pour un plan selon la période choisie. Replie sur le
@@ -57,8 +53,23 @@ interface PricingSectionProps {
 }
 
 export function PricingSection({ plans }: PricingSectionProps) {
+  const { user } = useAuth();
   const [period, setPeriod] = React.useState<BillingPeriod>("monthly");
+  const [loadingPlanId, setLoadingPlanId] = React.useState<PlanId | null>(null);
+  const [checkoutError, setCheckoutError] = React.useState<{ planId: PlanId; message: string } | null>(null);
   const hasAnnualOption = plans.some((plan) => plan.annualPriceXof !== null);
+
+  const handleSubscribe = async (planId: Exclude<PlanId, "basic">) => {
+    setCheckoutError(null);
+    setLoadingPlanId(planId);
+    const result = await startCheckout(planId, period);
+    if (!result.ok) {
+      setCheckoutError({ planId, message: result.error });
+      setLoadingPlanId(null);
+      return;
+    }
+    window.location.href = result.checkoutUrl;
+  };
 
   return (
     <section id="pricing" className="border-t border-white/[0.06] bg-neutral-950 py-20 sm:py-28">
@@ -109,9 +120,10 @@ export function PricingSection({ plans }: PricingSectionProps) {
           <div className="mt-12 grid gap-6 sm:grid-cols-3">
             {plans.map((plan, index) => {
               const highlighted = plan.id === STANDARD_PLAN_ID;
-              const cta = ctaForPlan(plan);
               const price = resolvePrice(plan, period);
               const showBarred = price.barred !== null && price.barred > price.amount;
+              const isBasic = plan.id === BASIC_PLAN_ID;
+              const isLoading = loadingPlanId === plan.id;
               return (
                 <Reveal key={plan.id} delay={index * 0.08}>
                   <div
@@ -149,16 +161,45 @@ export function PricingSection({ plans }: PricingSectionProps) {
                       ))}
                     </ul>
 
-                    <Button
-                      asChild
-                      className={cn(
-                        highlighted
-                          ? "bg-brand shadow-brand/30 hover:bg-brand-bright text-black shadow-lg"
-                          : "border border-white/15 bg-white/5 text-white hover:bg-white/10",
-                      )}
-                    >
-                      <Link href={cta.href}>{cta.label}</Link>
-                    </Button>
+                    {isBasic ? (
+                      <Button
+                        asChild
+                        className={cn(
+                          highlighted
+                            ? "bg-brand shadow-brand/30 hover:bg-brand-bright text-black shadow-lg"
+                            : "border border-white/15 bg-white/5 text-white hover:bg-white/10",
+                        )}
+                      >
+                        <Link href="/studio">Commencer gratuitement</Link>
+                      </Button>
+                    ) : !user ? (
+                      <Button
+                        asChild
+                        className={cn(
+                          highlighted
+                            ? "bg-brand shadow-brand/30 hover:bg-brand-bright text-black shadow-lg"
+                            : "border border-white/15 bg-white/5 text-white hover:bg-white/10",
+                        )}
+                      >
+                        <Link href="/signup">Créer un compte</Link>
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={() => void handleSubscribe(plan.id as Exclude<PlanId, "basic">)}
+                        disabled={loadingPlanId !== null}
+                        className={cn(
+                          highlighted
+                            ? "bg-brand shadow-brand/30 hover:bg-brand-bright text-black shadow-lg"
+                            : "border border-white/15 bg-white/5 text-white hover:bg-white/10",
+                        )}
+                      >
+                        {isLoading ? "Redirection…" : "S'abonner"}
+                      </Button>
+                    )}
+                    {checkoutError?.planId === plan.id && (
+                      <p className="text-destructive text-sm">{checkoutError.message}</p>
+                    )}
                   </div>
                 </Reveal>
               );

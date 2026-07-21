@@ -20,6 +20,7 @@ export interface UseSubscriptionResult {
 
 interface SubscriptionRow {
   plan_id: PlanId;
+  current_period_end: string | null;
 }
 
 /**
@@ -52,11 +53,18 @@ export function useSubscription(): UseSubscriptionResult {
         const supabase = createClient();
         const { data } = await supabase
           .from("subscriptions")
-          .select("plan_id")
+          .select("plan_id, current_period_end")
           .eq("user_id", user.id)
           .eq("status", "active")
           .maybeSingle<SubscriptionRow>();
-        if (data) planId = data.plan_id;
+
+        // `status = 'active'` seul ne suffit pas : un abonnement dont la
+        // période payée est passée doit retomber sur Basique, pas rester
+        // actif indéfiniment faute d'un job de renouvellement/expiration
+        // (Moneroo ne débite pas automatiquement — voir le chantier
+        // checkout/webhook).
+        const stillWithinPeriod = !data?.current_period_end || new Date(data.current_period_end) > new Date();
+        if (data && stillWithinPeriod) planId = data.plan_id;
       }
 
       const resolvedPlan = await getPlan(planId);
