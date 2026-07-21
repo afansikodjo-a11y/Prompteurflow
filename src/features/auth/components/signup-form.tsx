@@ -54,6 +54,7 @@ export function SignupForm() {
           autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
+          className="h-11"
         />
       </div>
       <div className="flex flex-col gap-1.5">
@@ -66,10 +67,11 @@ export function SignupForm() {
           autoComplete="new-password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
+          className="h-11"
         />
       </div>
       {error && <p className="text-destructive text-sm">{error}</p>}
-      <Button type="submit" disabled={submitting}>
+      <Button type="submit" size="lg" disabled={submitting} className="w-full">
         {submitting ? "Création…" : "Créer un compte"}
       </Button>
     </form>

@@ -1,13 +1,13 @@
 import Link from "next/link";
 
-import { LoginForm } from "@/features/auth";
+import { AuthSplitPanel, LoginForm } from "@/features/auth";
 
 export default function LoginPage() {
   return (
-    <section className="mx-auto flex max-w-sm flex-col gap-6 px-4 py-16">
+    <AuthSplitPanel>
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Connexion</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <h1 className="text-3xl font-bold tracking-tight">Connexion</h1>
+        <p className="text-muted-foreground mt-1.5 text-sm">
           Pas encore de compte ?{" "}
           <Link href="/signup" className="underline">
             Créer un compte
@@ -15,6 +15,6 @@ export default function LoginPage() {
         </p>
       </div>
       <LoginForm />
-    </section>
+    </AuthSplitPanel>
   );
 }
