@@ -9,6 +9,7 @@ const TABS = [
   { href: "/admin", label: "Vue d'ensemble" },
   { href: "/admin/plans", label: "Plans" },
   { href: "/admin/affiliates", label: "Affiliation" },
+  { href: "/admin/clients", label: "Clients" },
 ];
 
 /** Nav à onglets de l'espace admin — chrome de route, pas une métrique du dashboard. */

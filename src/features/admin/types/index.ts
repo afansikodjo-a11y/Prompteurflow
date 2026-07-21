@@ -8,3 +8,12 @@ export interface AdminAffiliateRow {
   accruedTotalXof: number;
   paidTotalXof: number;
 }
+
+export interface AdminCustomerRow {
+  id: string;
+  email: string;
+  role: "user" | "admin";
+  phone: string | null;
+  disabledAt: string | null;
+  createdAt: string;
+}
