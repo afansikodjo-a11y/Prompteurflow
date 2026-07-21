@@ -1,3 +1,4 @@
+import { getReferralCodeFromCookie } from "@/features/affiliate/lib/referral-cookie";
 import { createClient } from "@/lib/supabase/client";
 
 /** Traduit les messages d'erreur Supabase Auth les plus courants en français. */
@@ -10,10 +11,20 @@ function translateAuthError(message: string): string {
   return "Une erreur est survenue. Réessayez.";
 }
 
-/** Crée un compte (email + mot de passe). */
+/**
+ * Crée un compte (email + mot de passe). Transmet le code de parrainage
+ * (posé en cookie par `middleware.ts` depuis `?ref=`) via `options.data` —
+ * seul canal permettant à `handle_new_user()` (trigger Postgres) de le lire
+ * ensuite via `raw_user_meta_data`. Code absent : signup normal, inchangé.
+ */
 export async function signUp(email: string, password: string): Promise<{ error: string | null }> {
   const supabase = createClient();
-  const { error } = await supabase.auth.signUp({ email, password });
+  const referralCode = getReferralCodeFromCookie();
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: referralCode ? { data: { referral_code: referralCode } } : undefined,
+  });
   return { error: error ? translateAuthError(error.message) : null };
 }
 
