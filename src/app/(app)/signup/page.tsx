@@ -1,9 +1,18 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { FEATURE_FLAGS } from "@/config/flags";
 import { AuthSplitPanel, SignupForm } from "@/features/auth";
+import { createClient } from "@/lib/supabase/server";
 
-export default function SignupPage() {
+export default async function SignupPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) redirect("/studio");
+
   if (!FEATURE_FLAGS.signupEnabled) {
     return (
       <AuthSplitPanel>
