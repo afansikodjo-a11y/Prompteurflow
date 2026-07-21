@@ -24,8 +24,11 @@ export function HeroSection() {
           </Reveal>
 
           <Reveal delay={0.05}>
-            <h1 className="text-4xl font-bold tracking-tight text-balance text-white sm:text-5xl lg:text-6xl">
-              Ton script. Ta caméra.{" "}
+            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+              Ton script.
+              <br />
+              Ta caméra.
+              <br />
               <span className="text-brand-bright">Un seul appareil.</span>
             </h1>
           </Reveal>
