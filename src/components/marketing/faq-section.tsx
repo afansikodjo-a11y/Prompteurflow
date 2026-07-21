@@ -28,6 +28,10 @@ const FAQS = [
     a: "Oui. Écris-les directement dans l'application, ou importe un fichier existant (.txt, .docx, .pdf).",
   },
   {
+    q: "Je n'ai pas d'idée de script. L'IA peut l'écrire pour moi ?",
+    a: "Oui. Donne un sujet à l'assistant IA intégré, il rédige un script complet — ou améliore un texte que tu as déjà écrit (le raccourcir, le reformuler, corriger la grammaire...).",
+  },
+  {
     q: "Mes vidéos sont-elles envoyées sur un serveur ?",
     a: "Non. Elles restent stockées sur ton appareil ; tu choisis toi-même quand les télécharger.",
   },

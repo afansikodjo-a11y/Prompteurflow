@@ -19,7 +19,7 @@ import { TrustSection } from "@/components/marketing/trust-section";
 export const metadata: Metadata = {
   title: "Prompteur vidéo en ligne — filmez avec votre script sous les yeux",
   description:
-    "Prompteur Flow est un prompteur vidéo qui fait défiler votre script pendant que vous filmez, depuis ton téléphone, ta tablette ou ton ordinateur. Ton script. Ta caméra. Un seul appareil.",
+    "Prompteur Flow est un prompteur vidéo qui fait défiler votre script pendant que vous filmez, depuis ton téléphone, ta tablette ou ton ordinateur. Écris ton script, importe-le, ou laisse l'IA le rédiger pour toi. Ton script. Ta caméra. Un seul appareil.",
 };
 
 export default async function HomePage() {

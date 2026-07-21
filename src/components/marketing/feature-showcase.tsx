@@ -4,6 +4,7 @@ import {
   Layout,
   RefreshCw,
   Smartphone,
+  Sparkles,
   Upload,
   WifiOff,
 } from "lucide-react";
@@ -12,6 +13,11 @@ import { PrompterMockup } from "./mockup/prompter-mockup";
 import { Reveal } from "./reveal";
 
 const SECONDARY_FEATURES = [
+  {
+    icon: Sparkles,
+    title: "Pas d'inspiration ? L'IA écrit pour toi",
+    description: "Donne un sujet, l'assistant génère le script — ou améliore un texte que tu as déjà écrit.",
+  },
   {
     icon: RefreshCw,
     title: "Le script avance à ton rythme",

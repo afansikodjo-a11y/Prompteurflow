@@ -6,8 +6,8 @@ import { Reveal } from "./reveal";
 const STEPS = [
   {
     icon: FileText,
-    title: "Écris ton script",
-    description: "Prépare exactement ce que tu veux dire.",
+    title: "Écris ton script — ou laisse l'IA le faire",
+    description: "Rédige-le toi-même, importe-le, ou génère-le en quelques secondes avec l'assistant IA intégré.",
   },
   {
     icon: Camera,
