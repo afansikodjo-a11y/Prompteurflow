@@ -7,7 +7,14 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth";
-import { BASIC_PLAN_ID, startCheckout, STANDARD_PLAN_ID, type Plan, type PlanId } from "@/features/subscription";
+import {
+  BASIC_PLAN_ID,
+  planFeatureLines,
+  startCheckout,
+  STANDARD_PLAN_ID,
+  type Plan,
+  type PlanId,
+} from "@/features/subscription";
 import { Reveal } from "./reveal";
 
 const XOF_FORMATTER = new Intl.NumberFormat("fr-FR");
@@ -16,21 +23,6 @@ type BillingPeriod = "monthly" | "annual";
 
 function formatPrice(priceXof: number): string {
   return priceXof === 0 ? "Gratuit" : `${XOF_FORMATTER.format(priceXof)} FCFA`;
-}
-
-/** Traduit les limites réelles du plan en lignes lisibles — jamais de texte marketing déconnecté des vraies valeurs. */
-function planFeatureLines(plan: Plan): string[] {
-  const lines = [
-    plan.maxDurationSec === null
-      ? "Enregistrement sans limite de durée"
-      : `Clips jusqu'à ${plan.maxDurationSec} secondes`,
-    plan.maxScripts === null ? "Scripts illimités" : `${plan.maxScripts} scripts sauvegardés`,
-    plan.unlockedFilters.length > 1 ? "Tous les filtres vidéo" : "Filtre vidéo de base",
-    plan.watermark ? "Filigrane à l'export" : "Aucun filigrane",
-  ];
-  if (plan.scriptImport) lines.push("Import de script depuis un fichier (.txt)");
-  if (plan.aiWriter) lines.push("Rédaction et amélioration de script par IA");
-  return lines;
 }
 
 
