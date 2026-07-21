@@ -1,9 +1,8 @@
 /**
- * Indicateurs de configuration temporaires — inscriptions et tarifs
- * rouverts, mais `openAccess` reste actif tant que le paiement Moneroo
- * n'encaisse pas réellement (clés déjà en `.env.local`, checkout/webhook pas
- * encore construits). Repasser `openAccess: false` une fois Moneroo prêt,
- * pour faire respecter les vraies limites de chaque palier.
+ * Indicateurs de configuration — phase de test terminée : inscriptions,
+ * tarifs et vraies limites de plan sont maintenant tous actifs. Checkout +
+ * webhook Moneroo sont branchés, donc `openAccess` n'est plus nécessaire
+ * pour éviter de coincer un compte Basique sans moyen de payer.
  */
 export const FEATURE_FLAGS = {
   /** Inscriptions publiques ouvertes. */
@@ -11,10 +10,9 @@ export const FEATURE_FLAGS = {
   /** Tarifs annoncés publiquement (section visible sur la landing). */
   pricingVisible: true,
   /**
-   * Accès complet (limites du plan Pro) pour tout le monde, connecté ou non.
-   * Reste actif tant que Moneroo ne peut pas réellement encaisser : sans
-   * ça, un compte Basique buterait sur une limite sans aucun moyen de payer
-   * pour la lever, malgré des tarifs et des inscriptions déjà visibles.
+   * Désactivé : chaque compte est maintenant soumis aux vraies limites de
+   * son plan (Basique par défaut, Standard/Pro seulement via un abonnement
+   * actif et non expiré — voir `useSubscription`/`useMySubscriptionDetails`).
    */
-  openAccess: true,
+  openAccess: false,
 } as const;
