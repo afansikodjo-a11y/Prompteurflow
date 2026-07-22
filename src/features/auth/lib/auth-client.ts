@@ -48,13 +48,15 @@ export async function signOut(): Promise<{ error: string | null }> {
 /**
  * Envoie un email de réinitialisation de mot de passe — Supabase ne
  * confirme jamais si l'email existe ou non (le message affiché côté UI
- * reste volontairement générique, même principe côté serveur).
+ * reste volontairement générique, même principe côté serveur). URL dérivée
+ * de `window.location.origin` plutôt que de `NEXT_PUBLIC_APP_URL` — même
+ * précaution que `buildReferralLink`/`/api/checkout`, suite au lien de
+ * retour Moneroo cassé pour cette raison.
  */
 export async function resetPasswordForEmail(email: string): Promise<{ error: string | null }> {
   const supabase = createClient();
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${appUrl}/auth/callback?next=/reinitialiser-mot-de-passe`,
+    redirectTo: `${window.location.origin}/auth/callback?next=/reinitialiser-mot-de-passe`,
   });
   return { error: error ? translateAuthError(error.message) : null };
 }

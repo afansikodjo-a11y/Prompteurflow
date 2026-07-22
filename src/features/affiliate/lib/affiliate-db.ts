@@ -1,10 +1,15 @@
 import { createClient } from "@/lib/supabase/client";
 import type { AffiliateStats } from "../types";
 
-/** Construit le lien de parrainage à partager, à partir du code de l'utilisateur. */
+/**
+ * Construit le lien de parrainage à partager, à partir du code de
+ * l'utilisateur. Dérivé de `window.location.origin` plutôt que de
+ * `NEXT_PUBLIC_APP_URL` — une variable d'environnement mal configurée (ou
+ * pas redéployée) produirait silencieusement un lien relatif cassé,
+ * constaté sur le checkout Moneroo pour la même raison.
+ */
 export function buildReferralLink(code: string): string {
-  const base = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
-  return `${base}/?ref=${code}`;
+  return `${window.location.origin}/?ref=${code}`;
 }
 
 /** Code d'affiliation de l'utilisateur connecté, ou `null` si non connecté / lecture échouée. */

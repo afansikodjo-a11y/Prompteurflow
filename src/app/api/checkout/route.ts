@@ -61,7 +61,13 @@ export async function POST(request: Request) {
     return errorResponse(400, "Palier annuel indisponible pour ce plan.");
   }
 
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+  // Dérivé de la requête elle-même plutôt que de NEXT_PUBLIC_APP_URL : une
+  // variable d'environnement mal configurée/pas redéployée sur Vercel a
+  // produit un return_url relatif ("/paiement/retour" au lieu d'une URL
+  // absolue), rejeté par Moneroo ("The return url must be a valid URL.").
+  // L'origine de la requête entrante est toujours correcte, sans dépendre
+  // d'aucune variable à tenir à jour.
+  const appUrl = new URL(request.url).origin;
   const periodLabel = parsed.billingPeriod === "annual" ? "annuel" : "mensuel";
 
   let payment;
