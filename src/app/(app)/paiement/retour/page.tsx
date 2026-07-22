@@ -2,20 +2,40 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, MessageCircle, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { siteConfig } from "@/config/site";
 import { createClient } from "@/lib/supabase/client";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 const POLL_INTERVAL_MS = 3000;
 const MAX_POLLS = 10; // ~30s
 
-type Status = "checking" | "active" | "timeout";
+type Status = "checking" | "active" | "failed" | "timeout";
+
+const SUPPORT_MESSAGE = "Bonjour, mon paiement PrompteurFlow n'a pas abouti, pouvez-vous m'aider ?";
+
+function SupportWhatsAppLink() {
+  return (
+    <a
+      href={buildWhatsAppLink(siteConfig.supportWhatsAppPhone, SUPPORT_MESSAGE)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-brand-bright inline-flex items-center gap-1.5 text-sm underline"
+    >
+      <MessageCircle className="size-4" />
+      Contacter le support via WhatsApp
+    </a>
+  );
+}
 
 /**
  * Retour Moneroo après paiement — jamais la source de vérité (le webhook
  * l'est), juste un retour rassurant pendant que le webhook arrive. Vérifie
- * simplement si l'abonnement le plus récent de l'utilisateur est déjà actif.
+ * simplement si l'abonnement le plus récent de l'utilisateur est déjà actif,
+ * explicitement annulé (paiement échoué/annulé côté Moneroo), ou toujours en
+ * attente après le délai d'observation.
  */
 export default function PaiementRetourPage() {
   const [status, setStatus] = React.useState<Status>("checking");
@@ -44,6 +64,10 @@ export default function PaiementRetourPage() {
 
       if (data?.status === "active") {
         setStatus("active");
+        return;
+      }
+      if (data?.status === "canceled") {
+        setStatus("failed");
         return;
       }
 
@@ -80,6 +104,21 @@ export default function PaiementRetourPage() {
             Nous confirmons votre paiement avec Moneroo — ça ne prend généralement que quelques instants.
           </p>
         </>
+      ) : status === "failed" ? (
+        <>
+          <XCircle className="text-destructive size-12" />
+          <h1 className="text-2xl font-bold tracking-tight">Le paiement n&apos;a pas abouti</h1>
+          <p className="text-muted-foreground text-sm">
+            Votre paiement a échoué ou a été annulé — aucun montant ne devrait avoir été débité. Vous pouvez
+            réessayer, ou nous contacter si le problème persiste.
+          </p>
+          <div className="flex flex-col items-center gap-3">
+            <Button asChild variant="outline">
+              <Link href="/#pricing">Réessayer</Link>
+            </Button>
+            <SupportWhatsAppLink />
+          </div>
+        </>
       ) : (
         <>
           <h1 className="text-2xl font-bold tracking-tight">Ça prend plus de temps que prévu</h1>
@@ -87,9 +126,12 @@ export default function PaiementRetourPage() {
             Votre paiement est en cours de traitement. Si votre abonnement n&apos;est pas actif d&apos;ici quelques
             minutes, contactez-nous.
           </p>
-          <Button asChild variant="outline">
-            <Link href="/studio">Aller au Studio</Link>
-          </Button>
+          <div className="flex flex-col items-center gap-3">
+            <Button asChild variant="outline">
+              <Link href="/studio">Aller au Studio</Link>
+            </Button>
+            <SupportWhatsAppLink />
+          </div>
         </>
       )}
     </section>

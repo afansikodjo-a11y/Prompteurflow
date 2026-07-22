@@ -10,6 +10,7 @@ export interface UseAdminCustomersResult {
   loading: boolean;
   updatePhone: (id: string, phone: string) => Promise<void>;
   toggleStatus: (id: string, disabled: boolean) => Promise<{ error: string | null }>;
+  confirmEmail: (id: string) => Promise<{ error: string | null }>;
 }
 
 interface CustomerRow {
@@ -83,5 +84,22 @@ export function useAdminCustomers(): UseAdminCustomersResult {
     [refresh],
   );
 
-  return { customers, loading, updatePhone, toggleStatus };
+  const confirmEmail = React.useCallback(async (id: string): Promise<{ error: string | null }> => {
+    try {
+      const response = await fetch("/api/admin/customers/confirm-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: id }),
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        return { error: body.error ?? "Impossible de confirmer cet email." };
+      }
+      return { error: null };
+    } catch {
+      return { error: "Impossible de contacter le serveur. Vérifiez votre connexion." };
+    }
+  }, []);
+
+  return { customers, loading, updatePhone, toggleStatus, confirmEmail };
 }

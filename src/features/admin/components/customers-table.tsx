@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { MessageCircle } from "lucide-react";
+import { MailCheck, MessageCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { useAdminCustomers } from "../hooks/use-admin-customers";
 import type { AdminCustomerRow } from "../types";
 
@@ -17,22 +18,19 @@ const DATE_FORMATTER = new Intl.DateTimeFormat("fr-FR", {
 
 const WHATSAPP_MESSAGE = "Bonjour ! On voulait faire un point avec vous à propos de votre abonnement PrompteurFlow.";
 
-/** WhatsApp exige un numéro international sans +/espaces — on ne garde que les chiffres saisis. */
-function buildWhatsAppLink(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  return `https://wa.me/${digits}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
-}
-
 interface CustomerRowProps {
   customer: AdminCustomerRow;
   onSavePhone: (phone: string) => Promise<void>;
   onToggleStatus: () => Promise<{ error: string | null }>;
+  onConfirmEmail: () => Promise<{ error: string | null }>;
 }
 
-function CustomerRow({ customer, onSavePhone, onToggleStatus }: CustomerRowProps) {
+function CustomerRow({ customer, onSavePhone, onToggleStatus, onConfirmEmail }: CustomerRowProps) {
   const [phoneDraft, setPhoneDraft] = React.useState(customer.phone ?? "");
   const [toggleError, setToggleError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
+  const [confirmState, setConfirmState] = React.useState<"idle" | "busy" | "done" | "error">("idle");
+  const [confirmError, setConfirmError] = React.useState<string | null>(null);
 
   React.useEffect(() => setPhoneDraft(customer.phone ?? ""), [customer.phone]);
 
@@ -47,6 +45,18 @@ function CustomerRow({ customer, onSavePhone, onToggleStatus }: CustomerRowProps
     const { error } = await onToggleStatus();
     setBusy(false);
     if (error) setToggleError(error);
+  };
+
+  const handleConfirmEmail = async () => {
+    setConfirmState("busy");
+    setConfirmError(null);
+    const { error } = await onConfirmEmail();
+    if (error) {
+      setConfirmState("error");
+      setConfirmError(error);
+      return;
+    }
+    setConfirmState("done");
   };
 
   const isDisabled = customer.disabledAt !== null;
@@ -85,12 +95,22 @@ function CustomerRow({ customer, onSavePhone, onToggleStatus }: CustomerRowProps
         <div className="flex justify-end gap-2">
           {digitsOnly && (
             <Button asChild type="button" size="sm" variant="outline">
-              <a href={buildWhatsAppLink(customer.phone ?? "")} target="_blank" rel="noopener noreferrer">
+              <a href={buildWhatsAppLink(customer.phone ?? "", WHATSAPP_MESSAGE)} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="size-4" />
                 WhatsApp
               </a>
             </Button>
           )}
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => void handleConfirmEmail()}
+            disabled={confirmState === "busy" || confirmState === "done"}
+          >
+            <MailCheck className="size-4" />
+            {confirmState === "done" ? "Email confirmé" : "Confirmer l'email"}
+          </Button>
           <Button
             type="button"
             size="sm"
@@ -102,6 +122,7 @@ function CustomerRow({ customer, onSavePhone, onToggleStatus }: CustomerRowProps
           </Button>
         </div>
         {toggleError && <p className="text-destructive mt-1 text-xs">{toggleError}</p>}
+        {confirmError && <p className="text-destructive mt-1 text-xs">{confirmError}</p>}
       </td>
     </tr>
   );
@@ -109,7 +130,7 @@ function CustomerRow({ customer, onSavePhone, onToggleStatus }: CustomerRowProps
 
 /** Table complète des clients — téléphone éditable, relance WhatsApp, activation/désactivation de compte. */
 export function CustomersTable() {
-  const { customers, loading, updatePhone, toggleStatus } = useAdminCustomers();
+  const { customers, loading, updatePhone, toggleStatus, confirmEmail } = useAdminCustomers();
 
   if (loading) return <p className="text-muted-foreground text-sm">Chargement…</p>;
   if (customers.length === 0) {
@@ -135,6 +156,7 @@ export function CustomersTable() {
               customer={customer}
               onSavePhone={(phone) => updatePhone(customer.id, phone)}
               onToggleStatus={() => toggleStatus(customer.id, !customer.disabledAt)}
+              onConfirmEmail={() => confirmEmail(customer.id)}
             />
           ))}
         </tbody>

@@ -13,6 +13,8 @@ export const siteConfig = {
     light: "#ffffff",
     dark: "#0a0a0a",
   },
+  /** Numéro WhatsApp support (format international, sans le +) — contact affiché notamment en cas d'échec de paiement. */
+  supportWhatsAppPhone: "22891282590",
 } as const;
 
 export type SiteConfig = typeof siteConfig;

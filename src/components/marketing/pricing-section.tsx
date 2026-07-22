@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, MessageCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { useAuth } from "@/features/auth";
 import {
   BASIC_PLAN_ID,
@@ -18,6 +20,7 @@ import {
 import { Reveal } from "./reveal";
 
 const XOF_FORMATTER = new Intl.NumberFormat("fr-FR");
+const SUPPORT_MESSAGE = "Bonjour, je n'arrive pas à m'abonner sur PrompteurFlow, pouvez-vous m'aider ?";
 
 type BillingPeriod = "monthly" | "annual";
 
@@ -190,7 +193,18 @@ export function PricingSection({ plans }: PricingSectionProps) {
                       </Button>
                     )}
                     {checkoutError?.planId === plan.id && (
-                      <p className="text-destructive text-sm">{checkoutError.message}</p>
+                      <div className="flex flex-col gap-1.5">
+                        <p className="text-destructive text-sm">{checkoutError.message}</p>
+                        <a
+                          href={buildWhatsAppLink(siteConfig.supportWhatsAppPhone, SUPPORT_MESSAGE)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-bright inline-flex items-center gap-1.5 text-xs underline"
+                        >
+                          <MessageCircle className="size-3.5" />
+                          Contacter le support via WhatsApp
+                        </a>
+                      </div>
                     )}
                   </div>
                 </Reveal>
