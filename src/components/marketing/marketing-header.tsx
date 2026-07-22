@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { href: "#features", label: "Fonctionnalités" },
   ...(FEATURE_FLAGS.pricingVisible ? [{ href: "#pricing", label: "Tarifs" }] : []),
   { href: "#faq", label: "FAQ" },
+  { href: "/contact", label: "Contact" },
 ];
 
 /**
@@ -33,15 +34,25 @@ export function MarketingHeader() {
           </Link>
 
           <nav className="hidden items-center gap-8 md:flex">
-            {NAV_LINKS.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-sm text-neutral-400 transition-colors hover:text-white"
-              >
-                {link.label}
-              </a>
-            ))}
+            {NAV_LINKS.map((link) =>
+              link.href.startsWith("#") ? (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm text-neutral-400 transition-colors hover:text-white"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm text-neutral-400 transition-colors hover:text-white"
+                >
+                  {link.label}
+                </Link>
+              ),
+            )}
           </nav>
 
           <div className="hidden items-center gap-3 md:flex">
@@ -74,16 +85,27 @@ export function MarketingHeader() {
 
         {menuOpen && (
           <nav className="flex flex-col gap-1 border-t border-white/[0.06] px-4 pt-2 pb-6 md:hidden">
-            {NAV_LINKS.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="rounded-lg px-2 py-3 text-base text-neutral-300 hover:bg-white/5 hover:text-white"
-              >
-                {link.label}
-              </a>
-            ))}
+            {NAV_LINKS.map((link) =>
+              link.href.startsWith("#") ? (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-lg px-2 py-3 text-base text-neutral-300 hover:bg-white/5 hover:text-white"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-lg px-2 py-3 text-base text-neutral-300 hover:bg-white/5 hover:text-white"
+                >
+                  {link.label}
+                </Link>
+              ),
+            )}
             <Link
               href="/login"
               onClick={() => setMenuOpen(false)}
