@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { FEATURE_FLAGS } from "@/config/flags";
 import { getAllPlansServer } from "@/features/subscription/lib/plans-server";
 import { AudienceSection } from "@/components/marketing/audience-section";
+import { ContactSection } from "@/components/marketing/contact-section";
 import { DeviceShowcase } from "@/components/marketing/device-showcase";
 import { EmotionalSection } from "@/components/marketing/emotional-section";
 import { FaqSection } from "@/components/marketing/faq-section";
@@ -50,6 +51,7 @@ export default async function HomePage() {
       {FEATURE_FLAGS.pricingVisible && <PricingSection plans={plans} />}
       <TrustSection />
       <FaqSection />
+      <ContactSection />
       <FinalCtaSection />
     </div>
   );
