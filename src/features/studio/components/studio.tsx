@@ -237,6 +237,26 @@ export function Studio() {
   const { ref: containerRef, isFullscreen, toggle: toggleFullscreen } = useFullscreen<HTMLDivElement>();
   const countdown = useCountdown();
 
+  // Référence toujours à jour vers recorder/prompter, pour que le callback
+  // différé du décompte (3s, ci-dessous) utilise l'état réellement courant
+  // au moment où il se déclenche — jamais celui figé au clic sur « Tourner ».
+  // Sans ça : si le pipeline canvas se reconstruit entre le clic et la fin
+  // du décompte (ex. le filigrane du plan Basique s'active pile au moment
+  // où `captureActive` passe à `true`, alors qu'un filtre couleur faisait
+  // déjà tourner un premier pipeline canvas en aperçu), l'ancien flux
+  // capturé au clic a sa piste vidéo déjà arrêtée par le nettoyage du
+  // nouveau pipeline (`useFilteredStream`) — l'enregistrement démarre alors
+  // sur un `MediaRecorder` dont la piste vidéo est morte : écran noir à
+  // l'export, audio intact (piste indépendante, jamais arrêtée).
+  const recorderRef = React.useRef(recorder);
+  React.useEffect(() => {
+    recorderRef.current = recorder;
+  });
+  const prompterRef = React.useRef(prompter);
+  React.useEffect(() => {
+    prompterRef.current = prompter;
+  });
+
   // Rafraîchit la liste des périphériques une fois la permission accordée
   // (les labels ne sont renseignés qu'à ce moment-là).
   React.useEffect(() => {
@@ -316,8 +336,8 @@ export function Studio() {
     prompter.stop(); // repart du début du script
     setCaptureActive(true);
     countdown.start(3, () => {
-      recorder.start();
-      prompter.play();
+      recorderRef.current.start();
+      prompterRef.current.play();
     });
   };
 
