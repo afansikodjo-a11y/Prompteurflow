@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { SerwistProvider } from "@serwist/next/react";
 
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { AuthProvider } from "@/features/auth";
@@ -16,7 +17,14 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     // s'aligner sur la même direction artistique — plus de bascule clair/
     // sombre à proposer, voir `ModeToggle` retiré de `SiteHeader`.
     <ThemeProvider attribute="class" forcedTheme="dark" disableTransitionOnChange>
-      <AuthProvider>{children}</AuthProvider>
+      {/* `next.config.ts` ne génère `/sw.js` qu'en production (`disable`
+          identique côté build) — sans ce provider, le fichier était bien
+          construit mais jamais enregistré dans le navigateur : aucun
+          service worker actif, ce qui rend l'installation PWA peu fiable
+          (Android en particulier) même quand l'invite native s'affichait. */}
+      <SerwistProvider swUrl="/sw.js" disable={process.env.NODE_ENV !== "production"}>
+        <AuthProvider>{children}</AuthProvider>
+      </SerwistProvider>
     </ThemeProvider>
   );
 }
