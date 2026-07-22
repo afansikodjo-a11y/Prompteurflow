@@ -26,7 +26,7 @@ export interface AiWriteResult {
   remaining: number;
 }
 
-export type AiWriteErrorCode = "unauthenticated" | "validation" | "quota_exceeded" | "upstream_error";
+export type AiWriteErrorCode = "unauthenticated" | "plan_required" | "validation" | "quota_exceeded" | "upstream_error";
 
 export interface AiWriteError {
   error: string;

@@ -9,6 +9,9 @@ import {
   TOPIC_MAX_LENGTH,
 } from "@/features/ai-writer/constants";
 import type { AiWriteErrorCode, AiWriteRequest } from "@/features/ai-writer/types";
+import { FEATURE_FLAGS } from "@/config/flags";
+import { BASIC_PLAN_ID } from "@/features/subscription/constants";
+import type { PlanId } from "@/features/subscription/types";
 import { createClient } from "@/lib/supabase/server";
 
 import { GroqUpstreamError, callGroq } from "./lib/groq";
@@ -82,6 +85,28 @@ export async function POST(request: Request) {
   const parsed = validate(rawBody);
   if (!parsed) {
     return errorResponse(400, "validation", "Requête invalide — vérifiez les champs saisis.");
+  }
+
+  // Réservé au palier Pro (`plans.ai_writer`) — jusqu'ici seul `canUse` côté
+  // UI (studio.tsx/ai-writer-dialog.tsx) l'empêchait, ce qui laissait
+  // n'importe quel compte authentifié appeler cette route directement et
+  // consommer le budget Groq de l'app. Même logique de résolution de plan
+  // que `useSubscription` (client), reproduite ici côté serveur.
+  if (!FEATURE_FLAGS.openAccess) {
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("plan_id, current_period_end")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .maybeSingle<{ plan_id: PlanId; current_period_end: string | null }>();
+
+    const stillWithinPeriod = !sub?.current_period_end || new Date(sub.current_period_end) > new Date();
+    const planId: PlanId = sub && stillWithinPeriod ? sub.plan_id : BASIC_PLAN_ID;
+
+    const { data: plan } = await supabase.from("plans").select("ai_writer").eq("id", planId).single();
+    if (!plan?.ai_writer) {
+      return errorResponse(403, "plan_required", "L'assistant IA est réservé au palier Pro.");
+    }
   }
 
   // Le quota se vérifie avant tout appel Groq : une requête déjà au-dessus
