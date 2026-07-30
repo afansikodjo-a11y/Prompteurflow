@@ -43,7 +43,10 @@ export function useFilteredStream(
     }
 
     const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
+    // `alpha: false` : une image caméra est toujours pleinement opaque, ce
+    // qui évite au navigateur de suivre/composer un canal alpha à chaque
+    // `drawImage`/`filter` — gain mesurable sur mobile, gratuit ici.
+    const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx || typeof canvas.captureStream !== "function") {
       setOutput(source);
       return;
@@ -55,8 +58,22 @@ export function useFilteredStream(
     video.srcObject = source;
     void video.play().catch(() => {});
 
+    // Aligné sur `captureStream(CAPTURE_FPS)` ci-dessous : dessiner plus
+    // souvent que ce que le flux capturé retient ne sert à rien. Sans ce
+    // throttle, la boucle tournait à la fréquence native de l'écran (60Hz+
+    // sur la plupart des téléphones), doublant inutilement le coût de
+    // `drawImage`+`filter` pleine résolution — constaté comme cause de
+    // saccades vidéo (l'audio, capté hors canvas, restait fluide) dès qu'un
+    // filtre ou le filigrane engageait ce pipeline.
+    const CAPTURE_FPS = 30;
+    const FRAME_INTERVAL_MS = 1000 / CAPTURE_FPS;
+    let lastDrawTime = 0;
     let frameId: number;
-    const draw = () => {
+    const draw = (timestamp: number) => {
+      frameId = requestAnimationFrame(draw);
+      if (timestamp - lastDrawTime < FRAME_INTERVAL_MS) return;
+      lastDrawTime = timestamp;
+
       // `canvas.width`/`height` valent 300×150 par défaut dès sa création,
       // bien avant que la vidéo n'ait une image décodée : les utiliser seuls
       // comme condition laissait passer un premier appel à `drawImage` avant
@@ -91,11 +108,10 @@ export function useFilteredStream(
       } catch {
         // Cadre ignoré — on retente au prochain rAF plutôt que d'arrêter la boucle.
       }
-      frameId = requestAnimationFrame(draw);
     };
     frameId = requestAnimationFrame(draw);
 
-    const canvasStream = canvas.captureStream(30);
+    const canvasStream = canvas.captureStream(CAPTURE_FPS);
     source.getAudioTracks().forEach((track) => canvasStream.addTrack(track));
     setOutput(canvasStream);
 
