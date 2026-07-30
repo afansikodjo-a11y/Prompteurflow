@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   Check,
   Clapperboard,
@@ -66,26 +67,31 @@ import {
 /** Raison de la relance d'upgrade affichée à l'utilisateur (plan Basique). */
 type UpgradeReason = "filter" | "scripts" | "duration" | "import" | "aiWriter" | null;
 
-const UPGRADE_MESSAGES: Record<Exclude<UpgradeReason, null>, { title: string; description: string }> = {
+const UPGRADE_MESSAGES: Record<Exclude<UpgradeReason, null>, { title: string; description: string; plan: string }> = {
   filter: {
     title: "Filtre réservé au plan Standard",
     description: "Passez au plan Standard pour débloquer tous les filtres de style.",
+    plan: "Standard",
   },
   scripts: {
     title: "Limite de scripts atteinte",
     description: "Le plan Basique est limité à quelques scripts sauvegardés. Passez au plan Standard pour un nombre illimité.",
+    plan: "Standard",
   },
   duration: {
     title: "Durée maximale atteinte",
     description: "Le plan Basique limite la durée d'un enregistrement. Passez au plan Standard pour enregistrer sans limite.",
+    plan: "Standard",
   },
   import: {
     title: "Import de script réservé au plan Standard",
     description: "Passez au plan Standard pour importer un script depuis un fichier .txt.",
+    plan: "Standard",
   },
   aiWriter: {
     title: "Rédaction IA réservée au plan Pro",
     description: "Passez au plan Pro pour générer ou améliorer vos scripts avec l'assistant IA.",
+    plan: "Pro",
   },
 };
 
@@ -618,7 +624,9 @@ export function Studio() {
                 <DialogDescription>{UPGRADE_MESSAGES[upgradeReason].description}</DialogDescription>
               </DialogHeader>
               <DialogFooter>
-                <Button onClick={() => setUpgradeReason(null)}>Compris</Button>
+                <Button asChild onClick={() => setUpgradeReason(null)}>
+                  <Link href="/#pricing">Passer au plan {UPGRADE_MESSAGES[upgradeReason].plan}</Link>
+                </Button>
               </DialogFooter>
             </>
           )}
