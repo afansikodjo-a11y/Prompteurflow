@@ -8,6 +8,7 @@ import {
   Download,
   FlipHorizontal2,
   Maximize2,
+  MessageCircle,
   Minimize2,
   Minus,
   Pause,
@@ -36,7 +37,9 @@ import { siteConfig } from "@/config/site";
 import { useCountdown } from "@/hooks/use-countdown";
 import { useFullscreen } from "@/hooks/use-fullscreen";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { AiWriterDialog } from "@/features/ai-writer";
+import { useAuth } from "@/features/auth";
 import {
   CameraPreview,
   CaptureSettingsSheet,
@@ -54,7 +57,7 @@ import {
 } from "@/features/recorder";
 import { RecordingsLibrary, useRecordings } from "@/features/recordings";
 import { parseScriptFile, ScriptsLibrary, UnsupportedFileTypeError, useScripts } from "@/features/scripts";
-import { useSubscription } from "@/features/subscription";
+import { startCheckout, useSubscription, type PlanId } from "@/features/subscription";
 import {
   DEFAULT_SCRIPT,
   PrompterOverlay,
@@ -67,31 +70,39 @@ import {
 /** Raison de la relance d'upgrade affichée à l'utilisateur (plan Basique). */
 type UpgradeReason = "filter" | "scripts" | "duration" | "import" | "aiWriter" | null;
 
-const UPGRADE_MESSAGES: Record<Exclude<UpgradeReason, null>, { title: string; description: string; plan: string }> = {
+const UPGRADE_MESSAGES: Record<
+  Exclude<UpgradeReason, null>,
+  { title: string; description: string; planId: Exclude<PlanId, "basic">; planLabel: string }
+> = {
   filter: {
     title: "Filtre réservé au plan Standard",
     description: "Passez au plan Standard pour débloquer tous les filtres de style.",
-    plan: "Standard",
+    planId: "standard",
+    planLabel: "Standard",
   },
   scripts: {
     title: "Limite de scripts atteinte",
     description: "Le plan Basique est limité à quelques scripts sauvegardés. Passez au plan Standard pour un nombre illimité.",
-    plan: "Standard",
+    planId: "standard",
+    planLabel: "Standard",
   },
   duration: {
     title: "Durée maximale atteinte",
     description: "Le plan Basique limite la durée d'un enregistrement. Passez au plan Standard pour enregistrer sans limite.",
-    plan: "Standard",
+    planId: "standard",
+    planLabel: "Standard",
   },
   import: {
     title: "Import de script réservé au plan Standard",
     description: "Passez au plan Standard pour importer un script depuis un fichier .txt.",
-    plan: "Standard",
+    planId: "standard",
+    planLabel: "Standard",
   },
   aiWriter: {
     title: "Rédaction IA réservée au plan Pro",
     description: "Passez au plan Pro pour générer ou améliorer vos scripts avec l'assistant IA.",
-    plan: "Pro",
+    planId: "pro",
+    planLabel: "Pro",
   },
 };
 
@@ -189,9 +200,35 @@ function RollButton({
  * tandis que la barre de contrôles reste fidèle au thème (clair/sombre).
  */
 export function Studio() {
+  const { user } = useAuth();
   const { plan } = useSubscription();
   const [upgradeReason, setUpgradeReason] = React.useState<UpgradeReason>(null);
+  const [upgradeCheckoutLoading, setUpgradeCheckoutLoading] = React.useState(false);
+  const [upgradeCheckoutError, setUpgradeCheckoutError] = React.useState<string | null>(null);
   const [importError, setImportError] = React.useState<string | null>(null);
+
+  const closeUpgradeDialog = () => {
+    setUpgradeReason(null);
+    setUpgradeCheckoutLoading(false);
+    setUpgradeCheckoutError(null);
+  };
+
+  // Démarre directement le paiement pour le plan concerné (mensuel — la
+  // formule annuelle reste un choix à faire depuis la page tarifs) au lieu
+  // de renvoyer vers la landing marketing : `MarketingHeader` ignore l'état
+  // de connexion et affiche toujours "Connexion", ce qui donnait
+  // l'impression trompeuse d'être déconnecté en plus de quitter le studio.
+  const handleUpgradeCheckout = async (planId: Exclude<PlanId, "basic">) => {
+    setUpgradeCheckoutError(null);
+    setUpgradeCheckoutLoading(true);
+    const result = await startCheckout(planId, "monthly");
+    if (!result.ok) {
+      setUpgradeCheckoutError(result.error);
+      setUpgradeCheckoutLoading(false);
+      return;
+    }
+    window.location.href = result.checkoutUrl;
+  };
   const scriptsState = useScripts(DEFAULT_SCRIPT, plan.maxScripts ?? undefined);
   const { currentScript } = scriptsState;
   const [mirrored, setMirrored] = useLocalStorage("prompteurflow:mirrored", false);
@@ -615,7 +652,7 @@ export function Studio() {
         disabled={isRecording}
       />
 
-      <Dialog open={upgradeReason !== null} onOpenChange={(open) => !open && setUpgradeReason(null)}>
+      <Dialog open={upgradeReason !== null} onOpenChange={(open) => !open && closeUpgradeDialog()}>
         <DialogContent>
           {upgradeReason && (
             <>
@@ -623,10 +660,39 @@ export function Studio() {
                 <DialogTitle>{UPGRADE_MESSAGES[upgradeReason].title}</DialogTitle>
                 <DialogDescription>{UPGRADE_MESSAGES[upgradeReason].description}</DialogDescription>
               </DialogHeader>
-              <DialogFooter>
-                <Button asChild onClick={() => setUpgradeReason(null)}>
-                  <Link href="/#pricing">Passer au plan {UPGRADE_MESSAGES[upgradeReason].plan}</Link>
-                </Button>
+              <DialogFooter className="flex-col items-stretch gap-2 sm:items-end">
+                {user ? (
+                  <Button
+                    type="button"
+                    disabled={upgradeCheckoutLoading}
+                    onClick={() => void handleUpgradeCheckout(UPGRADE_MESSAGES[upgradeReason].planId)}
+                  >
+                    {upgradeCheckoutLoading
+                      ? "Redirection…"
+                      : `Passer au plan ${UPGRADE_MESSAGES[upgradeReason].planLabel}`}
+                  </Button>
+                ) : (
+                  <Button asChild onClick={closeUpgradeDialog}>
+                    <Link href="/signup">Créer un compte</Link>
+                  </Button>
+                )}
+                {upgradeCheckoutError && (
+                  <div className="flex flex-col gap-1.5 sm:items-end">
+                    <p className="text-destructive text-sm">{upgradeCheckoutError}</p>
+                    <a
+                      href={buildWhatsAppLink(
+                        siteConfig.supportWhatsAppPhone,
+                        "Bonjour, je n'arrive pas à m'abonner sur PrompteurFlow, pouvez-vous m'aider ?",
+                      )}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-bright inline-flex items-center gap-1.5 text-xs underline"
+                    >
+                      <MessageCircle className="size-3.5" />
+                      Contacter le support via WhatsApp
+                    </a>
+                  </div>
+                )}
               </DialogFooter>
             </>
           )}
