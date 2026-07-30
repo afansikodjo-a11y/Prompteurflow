@@ -10,16 +10,16 @@ export const maxDuration = 30;
 
 type BillingPeriod = "monthly" | "annual";
 
-const PLAN_NAMES: Record<string, string> = { standard: "Standard", pro: "Pro" };
+const PLAN_NAMES: Record<string, string> = { pro: "Pro" };
 
 function errorResponse(status: number, error: string) {
   return NextResponse.json({ error }, { status });
 }
 
-function validate(body: unknown): { planId: "standard" | "pro"; billingPeriod: BillingPeriod } | null {
+function validate(body: unknown): { planId: "pro"; billingPeriod: BillingPeriod } | null {
   if (typeof body !== "object" || body === null) return null;
   const record = body as Record<string, unknown>;
-  if (record.planId !== "standard" && record.planId !== "pro") return null;
+  if (record.planId !== "pro") return null;
   if (record.billingPeriod !== "monthly" && record.billingPeriod !== "annual") return null;
   return { planId: record.planId, billingPeriod: record.billingPeriod };
 }
@@ -48,11 +48,15 @@ export async function POST(request: Request) {
 
   const { data: plan } = await supabase
     .from("plans")
-    .select("price_xof, annual_price_xof")
+    .select("price_xof, annual_price_xof, is_active")
     .eq("id", parsed.planId)
     .single();
 
-  if (!plan) {
+  // `is_active` défend aussi contre un plan retiré de la vente (Standard
+  // aujourd'hui, potentiellement Pro lui-même un jour) — pas seulement
+  // contre un id invalide. Ne jamais se fier à la seule UI pour ça (déjà
+  // le sujet d'une faille corrigée plus tôt sur /api/ai/write).
+  if (!plan || !plan.is_active) {
     return errorResponse(400, "Plan introuvable.");
   }
 

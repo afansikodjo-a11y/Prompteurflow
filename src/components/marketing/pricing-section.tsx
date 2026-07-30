@@ -12,8 +12,8 @@ import { useAuth } from "@/features/auth";
 import {
   BASIC_PLAN_ID,
   planFeatureLines,
+  PRO_PLAN_ID,
   startCheckout,
-  STANDARD_PLAN_ID,
   type Plan,
   type PlanId,
 } from "@/features/subscription";
@@ -112,9 +112,9 @@ export function PricingSection({ plans }: PricingSectionProps) {
             Les tarifs sont momentanément indisponibles — réessayez dans un instant.
           </p>
         ) : (
-          <div className="mt-12 grid gap-6 sm:grid-cols-3">
+          <div className="mx-auto mt-12 grid max-w-2xl gap-6 sm:grid-cols-2">
             {plans.map((plan, index) => {
-              const highlighted = plan.id === STANDARD_PLAN_ID;
+              const highlighted = plan.id === PRO_PLAN_ID;
               const price = resolvePrice(plan, period);
               const showBarred = price.barred !== null && price.barred > price.amount;
               const isBasic = plan.id === BASIC_PLAN_ID;

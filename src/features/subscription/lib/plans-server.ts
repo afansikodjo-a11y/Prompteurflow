@@ -16,10 +16,11 @@ interface PlanRow {
   unlocked_filters: string[];
   script_import: boolean;
   ai_writer: boolean;
+  is_active: boolean;
 }
 
 const COLUMNS =
-  "id, name, price_xof, price_barred_xof, annual_price_xof, annual_price_barred_xof, max_duration_sec, max_scripts, watermark, unlocked_filters, script_import, ai_writer";
+  "id, name, price_xof, price_barred_xof, annual_price_xof, annual_price_barred_xof, max_duration_sec, max_scripts, watermark, unlocked_filters, script_import, ai_writer, is_active";
 
 function rowToPlan(row: PlanRow): Plan {
   return {
@@ -35,6 +36,7 @@ function rowToPlan(row: PlanRow): Plan {
     unlockedFilters: row.unlocked_filters as Plan["unlockedFilters"],
     scriptImport: row.script_import,
     aiWriter: row.ai_writer,
+    isActive: row.is_active,
   };
 }
 
@@ -43,11 +45,18 @@ function rowToPlan(row: PlanRow): Plan {
  * client navigateur — inadapté à un Server Component (page marketing publique,
  * lue au build/à la requête pour le SEO). Repli silencieux sur `[]` si la
  * lecture échoue : la section tarifs gère elle-même ce cas (pas de crash de
- * page pour un souci réseau ponctuel).
+ * page pour un souci réseau ponctuel). Seul point d'entrée filtré sur
+ * `is_active` : c'est la vitrine publique, contrairement à `getAllPlans()`
+ * (admin, doit tout voir) et `getPlan(id)` (doit résoudre même un plan
+ * désactivé pour un abonnement existant).
  */
 export async function getAllPlansServer(): Promise<Plan[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("plans").select(COLUMNS).order("price_xof");
+  const { data, error } = await supabase
+    .from("plans")
+    .select(COLUMNS)
+    .eq("is_active", true)
+    .order("price_xof");
   if (error || !data) return [];
   return (data as PlanRow[]).map(rowToPlan);
 }

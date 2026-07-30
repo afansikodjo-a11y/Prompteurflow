@@ -179,6 +179,18 @@ function PlanCard({ plan, onSave }: PlanCardProps) {
           />
           Rédaction IA (générer/améliorer un script)
         </Label>
+
+        <Label className="w-fit">
+          <input
+            type="checkbox"
+            checked={draft.isActive}
+            onChange={(event) => {
+              setSaved(false);
+              setDraft((current) => ({ ...current, isActive: event.target.checked }));
+            }}
+          />
+          Actif (visible sur la page tarifs)
+        </Label>
       </div>
 
       <div className="flex flex-col gap-1.5">

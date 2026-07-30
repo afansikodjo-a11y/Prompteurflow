@@ -75,28 +75,28 @@ const UPGRADE_MESSAGES: Record<
   { title: string; description: string; planId: Exclude<PlanId, "basic">; planLabel: string }
 > = {
   filter: {
-    title: "Filtre réservé au plan Standard",
-    description: "Passez au plan Standard pour débloquer tous les filtres de style.",
-    planId: "standard",
-    planLabel: "Standard",
+    title: "Filtre réservé au plan Pro",
+    description: "Passez au plan Pro pour débloquer tous les filtres de style.",
+    planId: "pro",
+    planLabel: "Pro",
   },
   scripts: {
     title: "Limite de scripts atteinte",
-    description: "Le plan Basique est limité à quelques scripts sauvegardés. Passez au plan Standard pour un nombre illimité.",
-    planId: "standard",
-    planLabel: "Standard",
+    description: "Le plan Basique est limité à quelques scripts sauvegardés. Passez au plan Pro pour un nombre illimité.",
+    planId: "pro",
+    planLabel: "Pro",
   },
   duration: {
     title: "Durée maximale atteinte",
-    description: "Le plan Basique limite la durée d'un enregistrement. Passez au plan Standard pour enregistrer sans limite.",
-    planId: "standard",
-    planLabel: "Standard",
+    description: "Le plan Basique limite la durée d'un enregistrement. Passez au plan Pro pour enregistrer sans limite.",
+    planId: "pro",
+    planLabel: "Pro",
   },
   import: {
-    title: "Import de script réservé au plan Standard",
-    description: "Passez au plan Standard pour importer un script depuis un fichier .txt.",
-    planId: "standard",
-    planLabel: "Standard",
+    title: "Import de script réservé au plan Pro",
+    description: "Passez au plan Pro pour importer un script depuis un fichier .txt.",
+    planId: "pro",
+    planLabel: "Pro",
   },
   aiWriter: {
     title: "Rédaction IA réservée au plan Pro",

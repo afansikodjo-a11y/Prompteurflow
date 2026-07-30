@@ -22,4 +22,5 @@ export const FAIL_CLOSED_PLAN: Plan = {
   unlockedFilters: ["none"],
   scriptImport: false,
   aiWriter: false,
+  isActive: true,
 };

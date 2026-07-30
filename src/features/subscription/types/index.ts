@@ -29,4 +29,6 @@ export interface Plan {
   scriptImport: boolean;
   /** Assistant IA d'écriture de script (génération/amélioration). */
   aiWriter: boolean;
+  /** `false` = retiré de la vente publique (page tarifs) — toujours résolvable pour un abonnement existant. */
+  isActive: boolean;
 }
