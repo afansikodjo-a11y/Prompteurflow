@@ -5,29 +5,25 @@ import Link from "next/link";
 import { Check, MessageCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { useAuth } from "@/features/auth";
 import {
+  AnnualSavingsChoice,
   BASIC_PLAN_ID,
+  formatXof,
   planFeatureLines,
   PRO_PLAN_ID,
   startCheckout,
+  type BillingPeriod,
   type Plan,
   type PlanId,
 } from "@/features/subscription";
 import { Reveal } from "./reveal";
 
-const XOF_FORMATTER = new Intl.NumberFormat("fr-FR");
 const SUPPORT_MESSAGE = "Bonjour, je n'arrive pas à m'abonner sur PrompteurFlow, pouvez-vous m'aider ?";
-
-type BillingPeriod = "monthly" | "annual";
-
-function formatPrice(priceXof: number): string {
-  return priceXof === 0 ? "Gratuit" : `${XOF_FORMATTER.format(priceXof)} FCFA`;
-}
-
 
 /**
  * Prix à afficher pour un plan selon la période choisie. Replie sur le
@@ -51,19 +47,36 @@ export function PricingSection({ plans }: PricingSectionProps) {
   const { user } = useAuth();
   const [period, setPeriod] = React.useState<BillingPeriod>("monthly");
   const [loadingPlanId, setLoadingPlanId] = React.useState<PlanId | null>(null);
+  const [pendingPeriod, setPendingPeriod] = React.useState<BillingPeriod | null>(null);
   const [checkoutError, setCheckoutError] = React.useState<{ planId: PlanId; message: string } | null>(null);
+  // Popup d'économie annuelle en cours (plan concerné, ou `null`) — distinct
+  // de `period` (le mensuel/annuel affiché sur les cartes) : ce popup ne
+  // s'ouvre que si on payait au mois par défaut, jamais si l'annuel a déjà
+  // été choisi explicitement via le bouton en haut.
+  const [upsellPlan, setUpsellPlan] = React.useState<Plan | null>(null);
   const hasAnnualOption = plans.some((plan) => plan.annualPriceXof !== null);
 
-  const handleSubscribe = async (planId: Exclude<PlanId, "basic">) => {
+  const runCheckout = async (planId: Exclude<PlanId, "basic">, billingPeriod: BillingPeriod) => {
     setCheckoutError(null);
     setLoadingPlanId(planId);
-    const result = await startCheckout(planId, period);
+    setPendingPeriod(billingPeriod);
+    const result = await startCheckout(planId, billingPeriod);
     if (!result.ok) {
+      setUpsellPlan(null);
       setCheckoutError({ planId, message: result.error });
       setLoadingPlanId(null);
+      setPendingPeriod(null);
       return;
     }
     window.location.href = result.checkoutUrl;
+  };
+
+  const handleSubscribe = (plan: Plan) => {
+    if (period === "monthly" && plan.annualPriceXof !== null) {
+      setUpsellPlan(plan);
+      return;
+    }
+    void runCheckout(plan.id as Exclude<PlanId, "basic">, period);
   };
 
   return (
@@ -138,10 +151,10 @@ export function PricingSection({ plans }: PricingSectionProps) {
                       <h3 className="font-semibold text-white">{plan.name}</h3>
                       <p className="mt-2 flex flex-wrap items-baseline gap-2">
                         {showBarred && (
-                          <span className="text-lg text-neutral-500 line-through">{formatPrice(price.barred!)}</span>
+                          <span className="text-lg text-neutral-500 line-through">{formatXof(price.barred!)}</span>
                         )}
                         <span className="text-3xl font-bold tracking-tight text-white">
-                          {formatPrice(price.amount)}
+                          {formatXof(price.amount)}
                         </span>
                         {price.amount > 0 && <span className="text-sm text-neutral-500">{price.suffix}</span>}
                       </p>
@@ -181,7 +194,7 @@ export function PricingSection({ plans }: PricingSectionProps) {
                     ) : (
                       <Button
                         type="button"
-                        onClick={() => void handleSubscribe(plan.id as Exclude<PlanId, "basic">)}
+                        onClick={() => handleSubscribe(plan)}
                         disabled={loadingPlanId !== null}
                         className={cn(
                           highlighted
@@ -213,6 +226,26 @@ export function PricingSection({ plans }: PricingSectionProps) {
           </div>
         )}
       </div>
+
+      <Dialog open={upsellPlan !== null} onOpenChange={(open) => !open && setUpsellPlan(null)}>
+        <DialogContent>
+          {upsellPlan && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Avant de continuer</DialogTitle>
+                <DialogDescription>
+                  Vous êtes sur le point de payer {upsellPlan.name} au mois.
+                </DialogDescription>
+              </DialogHeader>
+              <AnnualSavingsChoice
+                plan={upsellPlan}
+                pendingPeriod={pendingPeriod}
+                onChoose={(chosenPeriod) => void runCheckout(upsellPlan.id as Exclude<PlanId, "basic">, chosenPeriod)}
+              />
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

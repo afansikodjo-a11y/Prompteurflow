@@ -5,9 +5,9 @@ import Link from "next/link";
 import { FEATURE_FLAGS } from "@/config/flags";
 import { BASIC_PLAN_ID } from "../constants";
 import { useMySubscriptionDetails, type MySubscriptionStatus } from "../hooks/use-my-subscription-details";
+import { formatXof } from "../lib/format-price";
 import { planFeatureLines } from "../lib/plan-feature-lines";
 
-const XOF_FORMATTER = new Intl.NumberFormat("fr-FR");
 const DATE_FORMATTER = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 
 const STATUS_INFO: Record<MySubscriptionStatus, { label: string; className: string }> = {
@@ -49,7 +49,7 @@ export function MySubscriptionCard() {
 
       {plan.id !== BASIC_PLAN_ID && status === "active" && (
         <p className="text-muted-foreground text-sm">
-          {XOF_FORMATTER.format(priceForPeriod)} FCFA / {periodLabel}
+          {formatXof(priceForPeriod)} / {periodLabel}
           {currentPeriodEnd && <> — renouvellement le {DATE_FORMATTER.format(new Date(currentPeriodEnd))}</>}
         </p>
       )}

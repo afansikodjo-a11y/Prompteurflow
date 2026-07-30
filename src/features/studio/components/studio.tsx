@@ -57,7 +57,16 @@ import {
 } from "@/features/recorder";
 import { RecordingsLibrary, useRecordings } from "@/features/recordings";
 import { parseScriptFile, ScriptsLibrary, UnsupportedFileTypeError, useScripts } from "@/features/scripts";
-import { startCheckout, useSubscription, type PlanId } from "@/features/subscription";
+import {
+  AnnualSavingsChoice,
+  getPlan,
+  PRO_PLAN_ID,
+  startCheckout,
+  useSubscription,
+  type BillingPeriod,
+  type Plan,
+  type PlanId,
+} from "@/features/subscription";
 import {
   DEFAULT_SCRIPT,
   PrompterOverlay,
@@ -203,28 +212,35 @@ export function Studio() {
   const { user } = useAuth();
   const { plan } = useSubscription();
   const [upgradeReason, setUpgradeReason] = React.useState<UpgradeReason>(null);
-  const [upgradeCheckoutLoading, setUpgradeCheckoutLoading] = React.useState(false);
+  const [pendingPeriod, setPendingPeriod] = React.useState<BillingPeriod | null>(null);
   const [upgradeCheckoutError, setUpgradeCheckoutError] = React.useState<string | null>(null);
   const [importError, setImportError] = React.useState<string | null>(null);
+  // Prix du plan Pro (pas forcément celui de `plan` ci-dessus, qui reflète
+  // le plan COURANT de l'utilisateur — Basique la plupart du temps ici) :
+  // nécessaire pour proposer l'économie annuelle dans la modale d'upgrade.
+  const [proPlan, setProPlan] = React.useState<Plan | null>(null);
+
+  React.useEffect(() => {
+    void getPlan(PRO_PLAN_ID).then(setProPlan);
+  }, []);
 
   const closeUpgradeDialog = () => {
     setUpgradeReason(null);
-    setUpgradeCheckoutLoading(false);
+    setPendingPeriod(null);
     setUpgradeCheckoutError(null);
   };
 
-  // Démarre directement le paiement pour le plan concerné (mensuel — la
-  // formule annuelle reste un choix à faire depuis la page tarifs) au lieu
-  // de renvoyer vers la landing marketing : `MarketingHeader` ignore l'état
-  // de connexion et affiche toujours "Connexion", ce qui donnait
-  // l'impression trompeuse d'être déconnecté en plus de quitter le studio.
-  const handleUpgradeCheckout = async (planId: Exclude<PlanId, "basic">) => {
+  // Démarre directement le paiement pour le plan concerné au lieu de
+  // renvoyer vers la landing marketing : `MarketingHeader` ignore l'état de
+  // connexion et affiche toujours "Connexion", ce qui donnait l'impression
+  // trompeuse d'être déconnecté en plus de quitter le studio.
+  const handleUpgradeCheckout = async (planId: Exclude<PlanId, "basic">, billingPeriod: BillingPeriod) => {
     setUpgradeCheckoutError(null);
-    setUpgradeCheckoutLoading(true);
-    const result = await startCheckout(planId, "monthly");
+    setPendingPeriod(billingPeriod);
+    const result = await startCheckout(planId, billingPeriod);
     if (!result.ok) {
       setUpgradeCheckoutError(result.error);
-      setUpgradeCheckoutLoading(false);
+      setPendingPeriod(null);
       return;
     }
     window.location.href = result.checkoutUrl;
@@ -661,19 +677,25 @@ export function Studio() {
                 <DialogDescription>{UPGRADE_MESSAGES[upgradeReason].description}</DialogDescription>
               </DialogHeader>
               <DialogFooter className="flex-col items-stretch gap-2 sm:items-end">
-                {user ? (
-                  <Button
-                    type="button"
-                    disabled={upgradeCheckoutLoading}
-                    onClick={() => void handleUpgradeCheckout(UPGRADE_MESSAGES[upgradeReason].planId)}
-                  >
-                    {upgradeCheckoutLoading
-                      ? "Redirection…"
-                      : `Passer au plan ${UPGRADE_MESSAGES[upgradeReason].planLabel}`}
-                  </Button>
-                ) : (
+                {!user ? (
                   <Button asChild onClick={closeUpgradeDialog}>
                     <Link href="/signup">Créer un compte</Link>
+                  </Button>
+                ) : proPlan?.annualPriceXof != null ? (
+                  <AnnualSavingsChoice
+                    plan={proPlan}
+                    pendingPeriod={pendingPeriod}
+                    onChoose={(period) => void handleUpgradeCheckout(UPGRADE_MESSAGES[upgradeReason].planId, period)}
+                  />
+                ) : (
+                  <Button
+                    type="button"
+                    disabled={pendingPeriod !== null}
+                    onClick={() => void handleUpgradeCheckout(UPGRADE_MESSAGES[upgradeReason].planId, "monthly")}
+                  >
+                    {pendingPeriod !== null
+                      ? "Redirection…"
+                      : `Passer au plan ${UPGRADE_MESSAGES[upgradeReason].planLabel}`}
                   </Button>
                 )}
                 {upgradeCheckoutError && (

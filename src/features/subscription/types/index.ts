@@ -5,6 +5,8 @@ import type { VideoFilterId } from "@/features/recorder";
 
 export type PlanId = "basic" | "standard" | "pro";
 
+export type BillingPeriod = "monthly" | "annual";
+
 /** Plan tarifaire — prix et limites éditables par un admin, jamais en dur ailleurs. */
 export interface Plan {
   id: PlanId;

@@ -1,11 +1,11 @@
-import type { PlanId } from "../types";
+import type { BillingPeriod, PlanId } from "../types";
 
 export type StartCheckoutResult = { ok: true; checkoutUrl: string } | { ok: false; error: string };
 
 /** Démarre un checkout Moneroo pour un plan payant — le résultat contient l'URL vers laquelle rediriger. */
 export async function startCheckout(
   planId: Exclude<PlanId, "basic">,
-  billingPeriod: "monthly" | "annual",
+  billingPeriod: BillingPeriod,
 ): Promise<StartCheckoutResult> {
   try {
     const response = await fetch("/api/checkout", {
