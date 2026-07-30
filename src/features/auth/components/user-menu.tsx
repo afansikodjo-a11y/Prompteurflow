@@ -37,26 +37,31 @@ export function UserMenu() {
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Button asChild variant="ghost" size="sm">
+    <div className="flex items-center gap-1 sm:gap-2">
+      {/* Libellés masqués sous `sm` (icône seule) — sur mobile, la rangée
+          logo + bouton d'installation + ces liens + déconnexion dépassait
+          la largeur de l'écran (constaté : en-tête qui débordait
+          horizontalement). Même motif que `InstallButton` pour ce même
+          problème. */}
+      <Button asChild variant="ghost" size="sm" aria-label="Paramètres">
         <Link href="/settings">
           <Settings className="size-4" />
-          Paramètres
+          <span className="hidden sm:inline">Paramètres</span>
         </Link>
       </Button>
       {user.isAffiliate && (
-        <Button asChild variant="ghost" size="sm">
+        <Button asChild variant="ghost" size="sm" aria-label="Affiliation">
           <Link href="/affiliation">
             <Gift className="size-4" />
-            Affiliation
+            <span className="hidden sm:inline">Affiliation</span>
           </Link>
         </Button>
       )}
       {user.role === "admin" && (
-        <Button asChild variant="ghost" size="sm">
+        <Button asChild variant="ghost" size="sm" aria-label="Admin">
           <Link href="/admin">
             <Shield className="size-4" />
-            Admin
+            <span className="hidden sm:inline">Admin</span>
           </Link>
         </Button>
       )}
