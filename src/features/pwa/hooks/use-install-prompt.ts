@@ -8,6 +8,13 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+/** Posé par le script inline `capture-install-prompt` (`app/layout.tsx`), avant hydratation. */
+declare global {
+  interface Window {
+    __bip: BeforeInstallPromptEvent | null;
+  }
+}
+
 export interface UseInstallPromptResult {
   /** `true` si l'app tourne déjà en mode installé (standalone) — rien à proposer. */
   isInstalled: boolean;
@@ -48,10 +55,23 @@ export function useInstallPrompt(): UseInstallPromptResult {
     const isSafari = /safari/i.test(ua) && !/crios|fxios|edgios/i.test(ua);
     setIsIosSafari(isIos && isSafari);
 
+    const captureDeferredPrompt = (event: BeforeInstallPromptEvent) => {
+      deferredPromptRef.current = event;
+      setCanInstall(true);
+    };
+
+    // Déjà capturé par le script inline avant même que ce `useEffect` ne
+    // s'exécute (voir `app/layout.tsx`) — cas le plus fréquent en pratique,
+    // Chrome déclenchant souvent l'évènement très tôt dans le chargement,
+    // avant l'hydratation React.
+    if (window.__bip) captureDeferredPrompt(window.__bip);
+
+    // Filet de sécurité si l'évènement se déclenche après ce montage : les
+    // deux écouteurs (celui du script inline et celui-ci) reçoivent alors
+    // l'évènement brut normalement, puisque tous deux sont déjà attachés.
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
-      deferredPromptRef.current = event as BeforeInstallPromptEvent;
-      setCanInstall(true);
+      captureDeferredPrompt(event as BeforeInstallPromptEvent);
     };
     const handleAppInstalled = () => {
       setIsInstalled(true);
