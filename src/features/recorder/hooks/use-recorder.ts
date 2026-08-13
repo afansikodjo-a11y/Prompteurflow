@@ -2,8 +2,8 @@
 
 import * as React from "react";
 
-import { pickSupportedMimeType } from "../constants";
-import type { RecorderStatus } from "../types";
+import { pickSupportedMimeType, VIDEO_BITRATE_BY_RESOLUTION } from "../constants";
+import type { RecorderStatus, ResolutionPreset } from "../types";
 
 export interface UseRecorderResult {
   status: RecorderStatus;
@@ -31,6 +31,8 @@ export interface UseRecorderOptions {
    * s'arrête automatiquement à ce plafond. `undefined` = illimité (Standard/Pro).
    */
   maxDurationSec?: number;
+  /** Résolution de capture courante — détermine le débit vidéo cible (voir `VIDEO_BITRATE_BY_RESOLUTION`). */
+  resolution?: ResolutionPreset;
 }
 
 /**
@@ -56,11 +58,13 @@ export function useRecorder(
   const elapsedRef = React.useRef(0);
   const onCompleteRef = React.useRef(options.onComplete);
   const maxDurationRef = React.useRef(options.maxDurationSec);
+  const resolutionRef = React.useRef(options.resolution);
 
   // Maintient à jour, pour le handler `onstop` et le timer, le callback et le plafond courants.
   React.useEffect(() => {
     onCompleteRef.current = options.onComplete;
     maxDurationRef.current = options.maxDurationSec;
+    resolutionRef.current = options.resolution;
   });
   React.useEffect(() => {
     elapsedRef.current = elapsed;
@@ -115,7 +119,15 @@ export function useRecorder(
     chunksRef.current = [];
 
     const mimeType = pickSupportedMimeType();
-    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+    // `MediaRecorder` ne fixe aucun débit par défaut si on ne le précise pas
+    // : le navigateur retombe sur un débit générique nettement inférieur à
+    // celui d'une appli caméra native, même à résolution identique — d'où un
+    // rendu visiblement moins net.
+    const videoBitsPerSecond = VIDEO_BITRATE_BY_RESOLUTION[resolutionRef.current ?? "720p"];
+    const recorder = new MediaRecorder(stream, {
+      ...(mimeType ? { mimeType } : {}),
+      videoBitsPerSecond,
+    });
 
     recorder.ondataavailable = (event) => {
       if (event.data.size > 0) chunksRef.current.push(event.data);

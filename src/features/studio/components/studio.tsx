@@ -291,6 +291,7 @@ export function Studio() {
       setCaptureActive(false);
     },
     maxDurationSec: plan.maxDurationSec ?? undefined,
+    resolution: capture.resolution,
   });
   const prompter = useTeleprompter();
   const { ref: containerRef, isFullscreen, toggle: toggleFullscreen } = useFullscreen<HTMLDivElement>();

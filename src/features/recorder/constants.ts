@@ -22,6 +22,19 @@ export const DEFAULT_CAPTURE_SETTINGS: CaptureSettings = {
   resolution: "720p",
 };
 
+/**
+ * Débit vidéo cible (bits/s) par résolution, passé explicitement à
+ * `MediaRecorder`. Sans ça, le navigateur retombe sur un débit générique
+ * nettement inférieur à celui d'une appli caméra native, même à résolution
+ * égale — c'est la cause identifiée d'un rendu visiblement moins net que la
+ * caméra native.
+ */
+export const VIDEO_BITRATE_BY_RESOLUTION: Record<ResolutionPreset, number> = {
+  "480p": 2_500_000,
+  "720p": 5_000_000,
+  "1080p": 10_000_000,
+};
+
 /** Filtre de style vidéo par défaut (aucun traitement). */
 export const DEFAULT_VIDEO_FILTER: VideoFilterId = "none";
 
