@@ -142,11 +142,14 @@ export function useRecorder(
     // `MediaRecorder` ne fixe aucun débit par défaut si on ne le précise pas
     // : le navigateur retombe sur un débit générique nettement inférieur à
     // celui d'une appli caméra native, même à résolution identique — d'où un
-    // rendu visiblement moins net.
+    // rendu visiblement moins net. Même raisonnement pour l'audio
+    // (`audioBitsPerSecond`, jusqu'ici absent) : 128 kbps est généreux pour
+    // de la voix, largement au-dessus des débits par défaut habituels.
     const videoBitsPerSecond = VIDEO_BITRATE_BY_RESOLUTION[resolutionRef.current ?? "720p"];
     const recorder = new MediaRecorder(stream, {
       ...(mimeType ? { mimeType } : {}),
       videoBitsPerSecond,
+      audioBitsPerSecond: 128_000,
     });
 
     recorder.ondataavailable = (event) => {

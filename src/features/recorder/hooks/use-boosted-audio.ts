@@ -46,22 +46,23 @@ export function useBoostedAudio(stream: MediaStream | null): UseBoostedAudioResu
     // Compresseur : seuil bas (-40 dB) pour agir sur quasi tout le signal
     // vocal, pas seulement les pics forts — un micro qui capte globalement
     // bas (typique iPhone selon la distance/orientation) reste sinon
-    // inchangé sous le seuil, un ratio élevé (6:1) resserre fortement
-    // l'écart. Gain de rattrapage nettement plus agressif (×3.2, ~+10 dB)
-    // appliqué APRÈS compression, donc sans risque d'écrêter la plupart du
-    // temps. Un compresseur + gain seuls ne garantissent pas un plafond
-    // strict sur les rares transitoires encore chauds (mesuré en test :
-    // pic à 1.096 sans limiteur, du son distordu, pire que trop faible)
-    // — d'où le limiteur final en filet de sécurité, quasi brick-wall.
+    // inchangé sous le seuil. Ratio et gain de rattrapage assouplis (vs un
+    // premier réglage à 6:1/×3.2) : signalé comme sonnant plus "poussé"/
+    // moins naturel qu'une appli caméra native — la version précédente
+    // corrigeait le volume trop faible au prix d'un son sur-compressé
+    // (bruit de fond remonté avec la voix, respiration audible du
+    // compresseur). Toujours à vérifier en conditions réelles : un réglage
+    // trop doux referait resurgir le problème initial (trop faible sur
+    // iPhone) que ce chantier a résolu.
     const source = audioContext.createMediaStreamSource(new MediaStream(stream.getAudioTracks()));
     const compressor = audioContext.createDynamicsCompressor();
     compressor.threshold.value = -40;
     compressor.knee.value = 10;
-    compressor.ratio.value = 6;
+    compressor.ratio.value = 4;
     compressor.attack.value = 0.003;
     compressor.release.value = 0.15;
     const makeupGain = audioContext.createGain();
-    makeupGain.gain.value = 3.2;
+    makeupGain.gain.value = 2.5;
     // Limiteur : quasi brick-wall, garantit qu'aucun pic ne dépasse ~-1 dB
     // (≈ 0.9 en amplitude) quel que soit le niveau d'entrée ou le gain ci-dessus.
     const limiter = audioContext.createDynamicsCompressor();
