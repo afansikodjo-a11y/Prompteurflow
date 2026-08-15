@@ -37,6 +37,7 @@ import { siteConfig } from "@/config/site";
 import { useCountdown } from "@/hooks/use-countdown";
 import { useFullscreen } from "@/hooks/use-fullscreen";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useWakeLock } from "@/hooks/use-wake-lock";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { AiWriterDialog } from "@/features/ai-writer";
 import { useAuth } from "@/features/auth";
@@ -305,6 +306,12 @@ export function Studio() {
     maxDurationSec: plan.maxDurationSec ?? undefined,
     resolution: capture.resolution,
   });
+  // Empêche le téléphone de se verrouiller pendant l'enregistrement — sans
+  // ça, un tournage mains libres (personne ne touche l'écran) finit par
+  // verrouiller l'écran, ce qui fige le flux caméra en cours d'enregistrement
+  // (constaté sur 16 minutes : minuteur qui avance, image figée, son coupé
+  // peu après). Actif aussi en pause, tant que la session n'est pas arrêtée.
+  useWakeLock(recorder.status !== "idle");
   const prompter = useTeleprompter();
   const { ref: containerRef, isFullscreen, toggle: toggleFullscreen } = useFullscreen<HTMLDivElement>();
   const countdown = useCountdown();
