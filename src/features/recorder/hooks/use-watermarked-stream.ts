@@ -2,42 +2,30 @@
 
 import * as React from "react";
 
-import { FILTER_PRESETS } from "../constants";
-import type { VideoFilterId } from "../types";
-
 /**
- * Applique un filtre de style visuel (CSS `filter`) à un flux caméra, gravé
- * directement dans les pixels via un pipeline canvas.
+ * Grave un filigrane texte dans les pixels d'un flux caméra, via un pipeline
+ * canvas.
  *
- * C'est nécessaire pour que le filtre apparaisse dans l'enregistrement final :
- * `MediaRecorder` capture les pixels du flux qu'on lui donne, pas le rendu
- * stylé du DOM — un simple CSS `filter` sur un `<video>` de preview ne
+ * C'est nécessaire pour que le filigrane apparaisse dans l'enregistrement
+ * final : `MediaRecorder` capture les pixels du flux qu'on lui donne, pas un
+ * texte superposé dans le DOM par-dessus un `<video>` de preview, qui ne
  * ressortirait jamais dans le fichier exporté.
  *
- * Sans filtre ni filigrane, le flux source est retourné tel quel : aucun coût
- * canvas/RAF n'est payé dans le cas courant (rien à graver dans les pixels).
+ * Sans filigrane, le flux source est retourné tel quel : aucun coût
+ * canvas/RAF n'est payé dans le cas courant (rien à graver dans les pixels)
+ * — c'est aussi ce qui donne aux comptes payants (jamais de filigrane) un
+ * enregistrement capté directement, sans passer par ce pipeline.
  *
- * @param watermarkText Texte de filigrane (plan Basique) posé en bas à droite,
- * non affecté par le filtre couleur ; `undefined`/vide = pas de filigrane (Standard/Pro).
+ * @param watermarkText Texte de filigrane (plan Basique) posé en bas à droite ; `undefined`/vide = pas de filigrane (Pro).
  */
-export function useFilteredStream(
+export function useWatermarkedStream(
   source: MediaStream | null,
-  filter: VideoFilterId,
   watermarkText?: string,
 ): MediaStream | null {
   const [output, setOutput] = React.useState<MediaStream | null>(source);
-  const filterRef = React.useRef(FILTER_PRESETS[filter].cssFilter);
 
   React.useEffect(() => {
-    filterRef.current = FILTER_PRESETS[filter].cssFilter;
-  }, [filter]);
-
-  React.useEffect(() => {
-    if (
-      !source ||
-      (filter === "none" && !watermarkText) ||
-      typeof source.getVideoTracks !== "function"
-    ) {
+    if (!source || !watermarkText || typeof source.getVideoTracks !== "function") {
       setOutput(source);
       return;
     }
@@ -45,7 +33,7 @@ export function useFilteredStream(
     const canvas = document.createElement("canvas");
     // `alpha: false` : une image caméra est toujours pleinement opaque, ce
     // qui évite au navigateur de suivre/composer un canal alpha à chaque
-    // `drawImage`/`filter` — gain mesurable sur mobile, gratuit ici.
+    // `drawImage` — gain mesurable sur mobile, gratuit ici.
     const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx || typeof canvas.captureStream !== "function") {
       setOutput(source);
@@ -62,9 +50,9 @@ export function useFilteredStream(
     // souvent que ce que le flux capturé retient ne sert à rien. Sans ce
     // throttle, la boucle tournait à la fréquence native de l'écran (60Hz+
     // sur la plupart des téléphones), doublant inutilement le coût de
-    // `drawImage`+`filter` pleine résolution — constaté comme cause de
-    // saccades vidéo (l'audio, capté hors canvas, restait fluide) dès qu'un
-    // filtre ou le filigrane engageait ce pipeline.
+    // `drawImage` pleine résolution — constaté comme cause de saccades
+    // vidéo (l'audio, capté hors canvas, restait fluide) dès que le
+    // filigrane engageait ce pipeline.
     const CAPTURE_FPS = 30;
     const FRAME_INTERVAL_MS = 1000 / CAPTURE_FPS;
     let lastDrawTime = 0;
@@ -91,19 +79,14 @@ export function useFilteredStream(
           canvas.height = video.videoHeight;
         }
         if (video.readyState >= video.HAVE_CURRENT_DATA && canvas.width && canvas.height) {
-          ctx.filter = filterRef.current;
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-          if (watermarkText) {
-            // Filigrane non affecté par le filtre couleur : toujours net/lisible.
-            ctx.filter = "none";
-            const fontSize = Math.max(12, Math.round(canvas.width * 0.03));
-            ctx.font = `${fontSize}px sans-serif`;
-            ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-            ctx.textAlign = "right";
-            ctx.textBaseline = "bottom";
-            ctx.fillText(watermarkText, canvas.width - fontSize * 0.5, canvas.height - fontSize * 0.5);
-          }
+          const fontSize = Math.max(12, Math.round(canvas.width * 0.03));
+          ctx.font = `${fontSize}px sans-serif`;
+          ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+          ctx.textAlign = "right";
+          ctx.textBaseline = "bottom";
+          ctx.fillText(watermarkText, canvas.width - fontSize * 0.5, canvas.height - fontSize * 0.5);
         }
       } catch {
         // Cadre ignoré — on retente au prochain rAF plutôt que d'arrêter la boucle.
@@ -123,7 +106,7 @@ export function useFilteredStream(
       canvasStream.getVideoTracks().forEach((track) => track.stop());
       video.srcObject = null;
     };
-  }, [source, filter, watermarkText]);
+  }, [source, watermarkText]);
 
   return output;
 }

@@ -12,7 +12,6 @@ export function planFeatureLines(plan: Plan): string[] {
       ? "Enregistrement sans limite de durée"
       : `Clips jusqu'à ${plan.maxDurationSec} secondes`,
     plan.maxScripts === null ? "Scripts illimités" : `${plan.maxScripts} scripts sauvegardés`,
-    plan.unlockedFilters.length > 1 ? "Tous les filtres vidéo" : "Filtre vidéo de base",
     plan.watermark ? "Filigrane à l'export" : "Aucun filigrane",
   ];
   if (plan.scriptImport) lines.push("Import de script depuis un fichier (.txt)");

@@ -5,11 +5,8 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FILTER_PRESETS, type VideoFilterId } from "@/features/recorder";
 import type { Plan, PlanId } from "@/features/subscription";
 import { useAdminPlans } from "../hooks/use-admin-plans";
-
-const FILTER_IDS: VideoFilterId[] = ["none", "warm", "cool", "bw", "cinema"];
 
 /** Convertit un champ vide en « illimité » (`null`), sinon parse un entier positif. */
 function parseLimit(value: string): number | null {
@@ -29,16 +26,6 @@ function PlanCard({ plan, onSave }: PlanCardProps) {
   const [saved, setSaved] = React.useState(false);
 
   React.useEffect(() => setDraft(plan), [plan]);
-
-  const toggleFilter = (filter: VideoFilterId) => {
-    setSaved(false);
-    setDraft((current) => ({
-      ...current,
-      unlockedFilters: current.unlockedFilters.includes(filter)
-        ? current.unlockedFilters.filter((value) => value !== filter)
-        : [...current.unlockedFilters, filter],
-    }));
-  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -191,22 +178,6 @@ function PlanCard({ plan, onSave }: PlanCardProps) {
           />
           Actif (visible sur la page tarifs)
         </Label>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">Filtres débloqués</span>
-        <div className="flex flex-wrap gap-3">
-          {FILTER_IDS.map((filter) => (
-            <Label key={filter} className="w-fit">
-              <input
-                type="checkbox"
-                checked={draft.unlockedFilters.includes(filter)}
-                onChange={() => toggleFilter(filter)}
-              />
-              {FILTER_PRESETS[filter].label}
-            </Label>
-          ))}
-        </div>
       </div>
 
       <div className="flex items-center gap-2">

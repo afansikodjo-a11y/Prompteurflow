@@ -88,8 +88,8 @@ export function useBoostedAudio(stream: MediaStream | null): UseBoostedAudioResu
       limiter.disconnect();
       // Ne stoppe que la piste audio générée par le graphe Web Audio : la
       // piste vidéo appartient à `stream`, gérée par son propriétaire
-      // (`useCamera`) — même précaution que pour le filtre vidéo (voir
-      // `use-filtered-stream.ts`).
+      // (`useCamera`) — même précaution que pour le filigrane vidéo (voir
+      // `use-watermarked-stream.ts`).
       destination.stream.getAudioTracks().forEach((track) => track.stop());
       void audioContext.close().catch(() => {});
       audioContextRef.current = null;

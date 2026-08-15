@@ -13,14 +13,13 @@ interface PlanRow {
   max_duration_sec: number | null;
   max_scripts: number | null;
   watermark: boolean;
-  unlocked_filters: string[];
   script_import: boolean;
   ai_writer: boolean;
   is_active: boolean;
 }
 
 const COLUMNS =
-  "id, name, price_xof, price_barred_xof, annual_price_xof, annual_price_barred_xof, max_duration_sec, max_scripts, watermark, unlocked_filters, script_import, ai_writer, is_active";
+  "id, name, price_xof, price_barred_xof, annual_price_xof, annual_price_barred_xof, max_duration_sec, max_scripts, watermark, script_import, ai_writer, is_active";
 
 function rowToPlan(row: PlanRow): Plan {
   return {
@@ -33,7 +32,6 @@ function rowToPlan(row: PlanRow): Plan {
     maxDurationSec: row.max_duration_sec,
     maxScripts: row.max_scripts,
     watermark: row.watermark,
-    unlockedFilters: row.unlocked_filters as Plan["unlockedFilters"],
     scriptImport: row.script_import,
     aiWriter: row.ai_writer,
     isActive: row.is_active,

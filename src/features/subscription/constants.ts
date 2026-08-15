@@ -19,7 +19,6 @@ export const FAIL_CLOSED_PLAN: Plan = {
   maxDurationSec: 120,
   maxScripts: 3,
   watermark: true,
-  unlockedFilters: ["none"],
   scriptImport: false,
   aiWriter: false,
   isActive: true,

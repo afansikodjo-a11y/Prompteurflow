@@ -47,7 +47,7 @@ export function DeviceShowcase() {
               className={`flex flex-col items-center gap-6 text-center ${offsetClassName}`}
             >
               <Frame className="max-w-[180px] sm:max-w-none">
-                <PrompterMockup showFilters={false} recording={false} className={mockupClassName} />
+                <PrompterMockup recording={false} className={mockupClassName} />
               </Frame>
               <div>
                 <h3 className="font-semibold text-white">{title}</h3>

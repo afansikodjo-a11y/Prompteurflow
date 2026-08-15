@@ -22,7 +22,6 @@ import type { Script } from "../types";
 interface ScriptListItemProps {
   script: Script;
   active: boolean;
-  canDelete: boolean;
   onSelect: () => void;
   onRename: (title: string) => void;
   onRemove: () => void;
@@ -34,7 +33,6 @@ interface ScriptListItemProps {
 export function ScriptListItem({
   script,
   active,
-  canDelete,
   onSelect,
   onRename,
   onRemove,
@@ -100,9 +98,8 @@ export function ScriptListItem({
           <Button
             size="icon"
             variant="ghost"
-            disabled={!canDelete}
             aria-label="Supprimer"
-            className="text-destructive opacity-0 group-hover:opacity-100 focus-visible:opacity-100 disabled:opacity-30"
+            className="text-destructive opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
           >
             <Trash2 className="size-4" />
           </Button>

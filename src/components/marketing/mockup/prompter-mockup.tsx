@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Lock, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -12,15 +12,11 @@ const DEFAULT_LINES = [
   "Crée tes vidéos sans jamais les mémoriser.",
 ];
 
-const FILTER_LABELS = ["Aucun", "Chaud", "Froid", "N&B"];
-
 interface PrompterMockupProps {
   className?: string;
   lines?: string[];
   /** Affiche la pastille REC (scène en train de tourner) ou l'état aperçu. */
   recording?: boolean;
-  /** Affiche la bande de filtres, comme sur la vraie scène du Studio. */
-  showFilters?: boolean;
   /** Halo vert ambiant derrière le cadre — désactivé dans les compositions denses (grilles, cadres d'appareils). */
   glow?: boolean;
 }
@@ -29,14 +25,13 @@ interface PrompterMockupProps {
  * Recréation fidèle de la scène réelle du Studio (voir
  * `src/features/studio/components/studio.tsx`) — pas une capture d'écran,
  * mais un composant qui reproduit honnêtement l'interface (fond sombre,
- * texte qui défile, pastille REC, bande de filtres). Remplaçable plus tard
- * par une vraie vidéo/capture (`/assets/marketing/...`) sans changer l'API.
+ * texte qui défile, pastille REC). Remplaçable plus tard par une vraie
+ * vidéo/capture (`/assets/marketing/...`) sans changer l'API.
  */
 export function PrompterMockup({
   className,
   lines = DEFAULT_LINES,
   recording = true,
-  showFilters = true,
   glow = false,
 }: PrompterMockupProps) {
   return (
@@ -84,26 +79,6 @@ export function PrompterMockup({
           <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1 text-[10px] font-medium text-white backdrop-blur">
             <Sparkles className="text-brand-bright size-3" />
             Aperçu
-          </div>
-        )}
-
-        {showFilters && (
-          <div className="absolute inset-x-3 top-12 flex gap-1.5 overflow-hidden">
-            {FILTER_LABELS.map((label, index) => (
-              <span
-                key={label}
-                className={cn(
-                  "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-medium backdrop-blur",
-                  index === 0 ? "bg-brand text-black" : "bg-white/10 text-white/80",
-                )}
-              >
-                {label}
-              </span>
-            ))}
-            <span className="flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-medium text-white/40">
-              <Lock className="size-2.5" />
-              Cinéma
-            </span>
           </div>
         )}
 

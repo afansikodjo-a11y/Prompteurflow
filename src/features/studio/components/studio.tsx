@@ -44,16 +44,13 @@ import {
   CameraPreview,
   CaptureSettingsSheet,
   DEFAULT_CAPTURE_SETTINGS,
-  DEFAULT_VIDEO_FILTER,
-  FilterStrip,
   formatDuration,
   useBoostedAudio,
   useCamera,
-  useFilteredStream,
   useMediaDevices,
   useRecorder,
+  useWatermarkedStream,
   type CaptureSettings,
-  type VideoFilterId,
 } from "@/features/recorder";
 import { RecordingsLibrary, useRecordings } from "@/features/recordings";
 import { parseScriptFile, ScriptsLibrary, UnsupportedFileTypeError, useScripts } from "@/features/scripts";
@@ -77,18 +74,12 @@ import {
 } from "@/features/teleprompter";
 
 /** Raison de la relance d'upgrade affichée à l'utilisateur (plan Basique). */
-type UpgradeReason = "filter" | "scripts" | "duration" | "import" | "aiWriter" | null;
+type UpgradeReason = "scripts" | "duration" | "import" | "aiWriter" | null;
 
 const UPGRADE_MESSAGES: Record<
   Exclude<UpgradeReason, null>,
   { title: string; description: string; planId: Exclude<PlanId, "basic">; planLabel: string }
 > = {
-  filter: {
-    title: "Filtre réservé au plan Pro",
-    description: "Passez au plan Pro pour débloquer tous les filtres de style.",
-    planId: "pro",
-    planLabel: "Pro",
-  },
   scripts: {
     title: "Limite de scripts atteinte",
     description: "Le plan Basique est limité à quelques scripts sauvegardés. Passez au plan Pro pour un nombre illimité.",
@@ -252,10 +243,6 @@ export function Studio() {
     "prompteurflow:capture",
     DEFAULT_CAPTURE_SETTINGS,
   );
-  const [filter, setFilter] = useLocalStorage<VideoFilterId>(
-    "prompteurflow:filter",
-    DEFAULT_VIDEO_FILTER,
-  );
   // Éteinte, la caméra (et le micro) est réellement libérée côté matériel —
   // pas juste masquée — pour une lecture plein écran fond noir sans caméra.
   const [cameraEnabled, setCameraEnabled] = useLocalStorage("prompteurflow:camera-enabled", true);
@@ -273,19 +260,19 @@ export function Studio() {
   // frame + ré-encodage), on évite de le faire tourner en continu pendant le
   // simple cadrage/aperçu, sans quoi c'est le pipeline par défaut du plan
   // Basique en permanence dès que la caméra est allumée — constaté comme
-  // cause probable de surchauffe/décharge batterie rapide sur téléphone. Le
-  // filtre couleur, lui, reste gravé en aperçu en continu (WYSIWYG voulu).
+  // cause probable de surchauffe/décharge batterie rapide sur téléphone.
   const [captureActive, setCaptureActive] = React.useState(false);
-  // Le filtre (et le filigrane du plan Basique, seulement pendant la capture)
-  // sont gravés dans les pixels ici, en amont de l'aperçu ET de
-  // l'enregistrement, pour que les deux montrent/capturent le même rendu.
-  const filteredStream = useFilteredStream(
+  // Le filigrane du plan Basique (seulement pendant la capture) est gravé
+  // dans les pixels ici, en amont de l'aperçu ET de l'enregistrement, pour
+  // que les deux montrent/capturent le même rendu. Un compte payant
+  // (`plan.watermark` faux) ne passe jamais par ce pipeline : le flux
+  // caméra part directement à l'enregistreur, sans perte de génération.
+  const watermarkedStream = useWatermarkedStream(
     boostedAudio.stream,
-    filter,
     plan.watermark && captureActive ? siteConfig.name : undefined,
   );
   const recordings = useRecordings();
-  const recorder = useRecorder(filteredStream, {
+  const recorder = useRecorder(watermarkedStream, {
     onComplete: (blob, durationSec) => {
       void recordings.add(blob, durationSec);
       setCaptureActive(false);
@@ -300,14 +287,13 @@ export function Studio() {
   // Référence toujours à jour vers recorder/prompter, pour que le callback
   // différé du décompte (3s, ci-dessous) utilise l'état réellement courant
   // au moment où il se déclenche — jamais celui figé au clic sur « Tourner ».
-  // Sans ça : si le pipeline canvas se reconstruit entre le clic et la fin
-  // du décompte (ex. le filigrane du plan Basique s'active pile au moment
-  // où `captureActive` passe à `true`, alors qu'un filtre couleur faisait
-  // déjà tourner un premier pipeline canvas en aperçu), l'ancien flux
-  // capturé au clic a sa piste vidéo déjà arrêtée par le nettoyage du
-  // nouveau pipeline (`useFilteredStream`) — l'enregistrement démarre alors
-  // sur un `MediaRecorder` dont la piste vidéo est morte : écran noir à
-  // l'export, audio intact (piste indépendante, jamais arrêtée).
+  // Sans ça : le filigrane du plan Basique s'active pile au moment où
+  // `captureActive` passe à `true`, ce qui reconstruit le pipeline canvas
+  // (`useWatermarkedStream`) entre le clic et la fin du décompte — l'ancien
+  // flux capturé au clic a alors sa piste vidéo déjà arrêtée par ce
+  // nettoyage, et l'enregistrement démarre sur un `MediaRecorder` dont la
+  // piste vidéo est morte : écran noir à l'export, audio intact (piste
+  // indépendante, jamais arrêtée).
   const recorderRef = React.useRef(recorder);
   React.useEffect(() => {
     recorderRef.current = recorder;
@@ -428,7 +414,7 @@ export function Studio() {
       <div className="relative flex-1 overflow-hidden bg-neutral-950">
         {cameraEnabled && (
           <CameraPreview
-            stream={filteredStream}
+            stream={watermarkedStream}
             status={camera.status}
             mirrored={capture.facingMode === "user"}
             onRetry={camera.start}
@@ -507,16 +493,6 @@ export function Studio() {
           </div>
         )}
 
-        {cameraEnabled && !isRecording && !countdown.isCounting && (
-          <FilterStrip
-            value={filter}
-            onChange={setFilter}
-            unlockedFilters={plan.unlockedFilters}
-            onLockedSelect={() => setUpgradeReason("filter")}
-            className="absolute top-14 inset-x-3 z-20"
-          />
-        )}
-
         {countdown.count !== null && (
           <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-sm">
             <span
@@ -589,7 +565,7 @@ export function Studio() {
               <div className="flex items-center gap-2">
                 <RollButton
                   state={rollState}
-                  disabled={!filteredStream || !recorder.isSupported}
+                  disabled={!watermarkedStream || !recorder.isSupported}
                   onRoll={handleRoll}
                   onCancel={countdown.cancel}
                   onStop={handleStopRoll}

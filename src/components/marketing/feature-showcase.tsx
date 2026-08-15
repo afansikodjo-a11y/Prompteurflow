@@ -1,13 +1,4 @@
-import {
-  FileText,
-  Filter,
-  Layout,
-  RefreshCw,
-  Smartphone,
-  Sparkles,
-  Upload,
-  WifiOff,
-} from "lucide-react";
+import { FileText, Layout, RefreshCw, Smartphone, Sparkles, Upload, WifiOff } from "lucide-react";
 
 import { PrompterMockup } from "./mockup/prompter-mockup";
 import { Reveal } from "./reveal";
@@ -37,11 +28,6 @@ const SECONDARY_FEATURES = [
     icon: Upload,
     title: "Importe un script existant",
     description: "Fichier .txt, .docx ou .pdf, au lieu de tout retaper.",
-  },
-  {
-    icon: Filter,
-    title: "Change l'ambiance en un tap",
-    description: "Chaud, froid, noir & blanc, cinéma — visibles dès l'enregistrement.",
   },
   {
     icon: WifiOff,

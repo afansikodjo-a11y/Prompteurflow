@@ -11,14 +11,13 @@ interface PlanRow {
   max_duration_sec: number | null;
   max_scripts: number | null;
   watermark: boolean;
-  unlocked_filters: string[];
   script_import: boolean;
   ai_writer: boolean;
   is_active: boolean;
 }
 
 const COLUMNS =
-  "id, name, price_xof, price_barred_xof, annual_price_xof, annual_price_barred_xof, max_duration_sec, max_scripts, watermark, unlocked_filters, script_import, ai_writer, is_active";
+  "id, name, price_xof, price_barred_xof, annual_price_xof, annual_price_barred_xof, max_duration_sec, max_scripts, watermark, script_import, ai_writer, is_active";
 
 function rowToPlan(row: PlanRow): Plan {
   return {
@@ -31,7 +30,6 @@ function rowToPlan(row: PlanRow): Plan {
     maxDurationSec: row.max_duration_sec,
     maxScripts: row.max_scripts,
     watermark: row.watermark,
-    unlockedFilters: row.unlocked_filters as Plan["unlockedFilters"],
     scriptImport: row.script_import,
     aiWriter: row.ai_writer,
     isActive: row.is_active,
@@ -65,7 +63,6 @@ export async function updatePlan(id: PlanId, patch: Partial<Plan>): Promise<void
   if (patch.maxDurationSec !== undefined) update.max_duration_sec = patch.maxDurationSec;
   if (patch.maxScripts !== undefined) update.max_scripts = patch.maxScripts;
   if (patch.watermark !== undefined) update.watermark = patch.watermark;
-  if (patch.unlockedFilters !== undefined) update.unlocked_filters = patch.unlockedFilters;
   if (patch.scriptImport !== undefined) update.script_import = patch.scriptImport;
   if (patch.aiWriter !== undefined) update.ai_writer = patch.aiWriter;
   if (patch.isActive !== undefined) update.is_active = patch.isActive;

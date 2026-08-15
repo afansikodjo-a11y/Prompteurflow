@@ -24,7 +24,7 @@ PrompteurFlow est un prompteur vidéo en ligne : il permet de faire défiler un 
 Le Service propose notamment :
 - la rédaction et l'édition de scripts, y compris leur import depuis un fichier (.txt, .docx, .pdf) selon le palier ;
 - l'assistance à la rédaction de script par intelligence artificielle, sur le palier Pro ;
-- l'enregistrement vidéo avec réglages de cadrage, filtres visuels et réglages de capture ;
+- l'enregistrement vidéo avec réglages de cadrage et réglages de capture ;
 - un programme d'affiliation, sur demande, régi par ses propres conditions communiquées lors de son activation.
 
 Le Service est proposé selon plusieurs paliers (Basique, Standard, Pro), dont le contenu et les tarifs sont décrits sur la page https://prompteurflow.com/#pricing et régis, pour leur volet commercial, par les Conditions Générales de Vente (CGV) disponibles à [À COMPLÉTER — URL de la page CGV].

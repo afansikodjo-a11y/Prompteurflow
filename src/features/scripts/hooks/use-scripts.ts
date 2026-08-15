@@ -25,7 +25,11 @@ export interface UseScriptsResult {
    */
   create: (input?: Partial<Pick<Script, "title" | "content">>) => string | null;
   rename: (id: string, title: string) => void;
-  /** Supprime un script (sans effet s'il ne reste qu'un seul script). */
+  /**
+   * Supprime un script, y compris le dernier restant — l'effet d'amorçage
+   * (collection vide au premier lancement) recrée alors aussitôt un premier
+   * script vide, la collection n'est donc jamais réellement vide à l'écran.
+   */
   remove: (id: string) => void;
   updateContent: (id: string, content: string) => void;
 }
@@ -113,7 +117,7 @@ export function useScripts(seedContent = "", maxScripts?: number): UseScriptsRes
 
   const remove = React.useCallback(
     (id: string) => {
-      setScripts((list) => (list.length <= 1 ? list : list.filter((script) => script.id !== id)));
+      setScripts((list) => list.filter((script) => script.id !== id));
     },
     [setScripts],
   );

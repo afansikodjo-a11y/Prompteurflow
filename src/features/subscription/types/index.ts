@@ -1,8 +1,6 @@
 /**
  * Types du domaine « subscription » (plans Basique/Standard/Pro).
  */
-import type { VideoFilterId } from "@/features/recorder";
-
 export type PlanId = "basic" | "standard" | "pro";
 
 export type BillingPeriod = "monthly" | "annual";
@@ -25,8 +23,6 @@ export interface Plan {
   maxScripts: number | null;
   /** Filigrane visible sur les exports. */
   watermark: boolean;
-  /** Filtres vidéo débloqués pour ce plan. */
-  unlockedFilters: VideoFilterId[];
   /** Import de script depuis un fichier (.txt). */
   scriptImport: boolean;
   /** Assistant IA d'écriture de script (génération/amélioration). */

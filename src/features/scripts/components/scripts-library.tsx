@@ -115,7 +115,6 @@ export function ScriptsLibrary({
                 key={script.id}
                 script={script}
                 active={script.id === currentId}
-                canDelete={scripts.length > 1}
                 onSelect={() => handleSelect(script.id)}
                 onRename={(title) => onRename(script.id, title)}
                 onRemove={() => onRemove(script.id)}
