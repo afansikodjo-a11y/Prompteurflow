@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { pickSupportedMimeType, VIDEO_BITRATE_BY_RESOLUTION } from "../constants";
+import { CHUNK_TIMESLICE_MS, pickSupportedMimeType, VIDEO_BITRATE_BY_RESOLUTION } from "../constants";
 import type { RecorderStatus, ResolutionPreset } from "../types";
 
 export interface UseRecorderResult {
@@ -33,6 +33,20 @@ export interface UseRecorderOptions {
   maxDurationSec?: number;
   /** Résolution de capture courante — détermine le débit vidéo cible (voir `VIDEO_BITRATE_BY_RESOLUTION`). */
   resolution?: ResolutionPreset;
+  /**
+   * Persistance incrémentale pendant l'enregistrement : sans ces trois
+   * callbacks, rien n'est écrit avant `onComplete` — un enregistrement long
+   * est alors intégralement perdu si l'onglet plante avant l'arrêt normal
+   * (constaté : 16 minutes perdues d'un coup). Volontairement injectés
+   * plutôt qu'importés ici : ce hook ne connaît rien de la façon dont c'est
+   * stocké (voir `useRecordings` dans la feature `recordings`, qui les
+   * fournit).
+   */
+  onSessionStart?: () => void | Promise<void>;
+  /** Appelé pour chaque fragment dès qu'il est disponible (cadencé par `CHUNK_TIMESLICE_MS`). */
+  onChunk?: (chunk: Blob) => void | Promise<void>;
+  /** Appelé à l'arrêt (normal ou automatique), après `onComplete` — le clip final est sauvegardé, les fragments intermédiaires peuvent être nettoyés. */
+  onSessionEnd?: () => void | Promise<void>;
 }
 
 /**
@@ -59,12 +73,18 @@ export function useRecorder(
   const onCompleteRef = React.useRef(options.onComplete);
   const maxDurationRef = React.useRef(options.maxDurationSec);
   const resolutionRef = React.useRef(options.resolution);
+  const onSessionStartRef = React.useRef(options.onSessionStart);
+  const onChunkRef = React.useRef(options.onChunk);
+  const onSessionEndRef = React.useRef(options.onSessionEnd);
 
   // Maintient à jour, pour le handler `onstop` et le timer, le callback et le plafond courants.
   React.useEffect(() => {
     onCompleteRef.current = options.onComplete;
     maxDurationRef.current = options.maxDurationSec;
     resolutionRef.current = options.resolution;
+    onSessionStartRef.current = options.onSessionStart;
+    onChunkRef.current = options.onChunk;
+    onSessionEndRef.current = options.onSessionEnd;
   });
   React.useEffect(() => {
     elapsedRef.current = elapsed;
@@ -130,7 +150,10 @@ export function useRecorder(
     });
 
     recorder.ondataavailable = (event) => {
-      if (event.data.size > 0) chunksRef.current.push(event.data);
+      if (event.data.size > 0) {
+        chunksRef.current.push(event.data);
+        void onChunkRef.current?.(event.data);
+      }
     };
     recorder.onstop = () => {
       const blob = new Blob(chunksRef.current, { type: mimeType || "video/webm" });
@@ -138,9 +161,16 @@ export function useRecorder(
       urlRef.current = url;
       setRecordingUrl(url);
       onCompleteRef.current?.(blob, elapsedRef.current);
+      void onSessionEndRef.current?.();
     };
 
-    recorder.start();
+    void onSessionStartRef.current?.();
+    // Timeslice explicite : sans lui, `ondataavailable` ne se déclenche
+    // qu'une seule fois, à l'arrêt — tout reste en mémoire jusque-là (voir
+    // `CHUNK_TIMESLICE_MS`). Avec lui, chaque fragment part vers `onChunk`
+    // au fil de l'eau, ce qui borne à quelques secondes ce qu'un crash
+    // pourrait faire perdre.
+    recorder.start(CHUNK_TIMESLICE_MS);
     recorderRef.current = recorder;
     setStatus("recording");
     setElapsed(0);

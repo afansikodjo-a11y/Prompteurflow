@@ -10,5 +10,5 @@ export { CameraPreview } from "./components/camera-preview";
 export { RecordButton } from "./components/record-button";
 export { CaptureSettingsSheet } from "./components/capture-settings-sheet";
 export { formatDuration } from "./utils";
-export { DEFAULT_CAPTURE_SETTINGS } from "./constants";
+export { CHUNK_TIMESLICE_MS, DEFAULT_CAPTURE_SETTINGS } from "./constants";
 export type { CameraStatus, RecorderStatus, FacingMode, CaptureSettings, ResolutionPreset } from "./types";

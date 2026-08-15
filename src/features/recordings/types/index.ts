@@ -12,4 +12,6 @@ export interface RecordingMeta {
   /** Taille du blob, en octets. */
   size: number;
   mimeType: string;
+  /** `true` si récupéré après une interruption (crash/onglet tué) plutôt que sauvegardé normalement — durée estimée, pas exacte. */
+  recovered?: boolean;
 }

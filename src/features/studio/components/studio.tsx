@@ -272,10 +272,35 @@ export function Studio() {
     plan.watermark && captureActive ? siteConfig.name : undefined,
   );
   const recordings = useRecordings();
+  // Session de sauvegarde incrémentale de l'enregistrement en cours — sans
+  // ça, un clip long est entièrement perdu si l'onglet plante avant l'arrêt
+  // normal (constaté : 16 minutes perdues d'un coup). `chunkIndexRef` donne
+  // à chaque fragment un ordre stable, nécessaire pour les rassembler dans
+  // le bon ordre en cas de récupération.
+  const sessionIdRef = React.useRef<string | null>(null);
+  const chunkIndexRef = React.useRef(0);
   const recorder = useRecorder(watermarkedStream, {
     onComplete: (blob, durationSec) => {
       void recordings.add(blob, durationSec);
       setCaptureActive(false);
+    },
+    onSessionStart: async () => {
+      chunkIndexRef.current = 0;
+      sessionIdRef.current = await recordings.beginSession();
+    },
+    onChunk: async (chunk) => {
+      if (!sessionIdRef.current) return;
+      // Index capturé avant l'écriture (asynchrone) : deux fragments qui
+      // arrivent rapprochés ne doivent jamais se voir attribuer le même
+      // index sous prétexte que la sauvegarde du premier n'a pas fini.
+      const index = chunkIndexRef.current;
+      chunkIndexRef.current += 1;
+      await recordings.saveChunk(sessionIdRef.current, index, chunk);
+    },
+    onSessionEnd: async () => {
+      if (!sessionIdRef.current) return;
+      await recordings.endSession(sessionIdRef.current);
+      sessionIdRef.current = null;
     },
     maxDurationSec: plan.maxDurationSec ?? undefined,
     resolution: capture.resolution,

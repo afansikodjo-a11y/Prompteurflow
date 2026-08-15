@@ -37,6 +37,18 @@ export const VIDEO_BITRATE_BY_RESOLUTION: Record<ResolutionPreset, number> = {
 };
 
 /**
+ * Intervalle (ms) auquel `MediaRecorder` livre un fragment via
+ * `ondataavailable`, au lieu de tout garder en mémoire jusqu'à l'arrêt.
+ * Chaque fragment est sauvegardé en IndexedDB au fil de l'eau (voir
+ * `useRecordings.saveChunk` dans la feature `recordings`) — sans ça, un
+ * enregistrement long perdu en totalité si l'onglet plante/est tué par le
+ * système avant la fin (constaté : 16 minutes perdues d'un coup). Repris
+ * par le calcul de durée à la récupération d'une session interrompue
+ * (`recordings-db.ts`) : à garder synchronisé si cette valeur change.
+ */
+export const CHUNK_TIMESLICE_MS = 3_000;
+
+/**
  * Formats d'encodage vidéo par ordre de préférence. On retient le premier
  * réellement supporté par le navigateur (`MediaRecorder.isTypeSupported`) —
  * un candidat non supporté est simplement ignoré, jamais une erreur.

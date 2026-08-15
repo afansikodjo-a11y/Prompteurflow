@@ -46,7 +46,17 @@ export function RecordingListItem({
         onClick={onPlay}
         className="flex min-w-0 flex-1 flex-col items-start text-left"
       >
-        <span className="text-sm font-medium">{formatClipDate(recording.createdAt)}</span>
+        <span className="flex items-center gap-1.5 text-sm font-medium">
+          {formatClipDate(recording.createdAt)}
+          {recording.recovered && (
+            <span
+              className="bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+              title="Récupéré après une interruption — durée estimée, peut manquer les dernières secondes."
+            >
+              Récupéré
+            </span>
+          )}
+        </span>
         <span className="text-muted-foreground text-xs">
           {formatClipDuration(recording.durationSec)} · {formatBytes(recording.size)}
         </span>

@@ -4,9 +4,13 @@ import * as React from "react";
 
 import {
   addRecording,
+  beginRecordingSession,
   deleteRecording,
+  endRecordingSession,
   getAllRecordings,
   getRecordingBlob,
+  recoverOrphanSessions,
+  saveRecordingChunk,
 } from "../lib/recordings-db";
 import type { RecordingMeta } from "../types";
 
@@ -20,6 +24,15 @@ export interface UseRecordingsResult {
   /** Crée une URL objet pour lire/télécharger un clip (à révoquer après usage). */
   getObjectUrl: (id: string) => Promise<string | null>;
   refresh: () => Promise<void>;
+  /**
+   * Sauvegarde incrémentale d'un enregistrement long en cours — à brancher
+   * sur `onSessionStart`/`onChunk`/`onSessionEnd` de `useRecorder`, pour
+   * qu'un crash pendant l'enregistrement ne fasse perdre que les dernières
+   * secondes plutôt que le clip entier.
+   */
+  beginSession: () => Promise<string>;
+  saveChunk: (sessionId: string, chunkIndex: number, chunk: Blob) => Promise<void>;
+  endSession: (sessionId: string) => Promise<void>;
 }
 
 function generateId(): string {
@@ -49,7 +62,17 @@ export function useRecordings(): UseRecordingsResult {
   }, []);
 
   React.useEffect(() => {
-    void refresh();
+    // Récupère d'abord tout enregistrement interrompu (crash/onglet tué
+    // avant l'arrêt normal) avant de charger la liste, pour qu'un clip
+    // récupéré apparaisse dès ce premier chargement.
+    void (async () => {
+      try {
+        await recoverOrphanSessions();
+      } catch (error) {
+        console.error("Échec de récupération d'un enregistrement interrompu :", error);
+      }
+      await refresh();
+    })();
   }, [refresh]);
 
   const add = React.useCallback(
@@ -81,5 +104,24 @@ export function useRecordings(): UseRecordingsResult {
     return blob ? URL.createObjectURL(blob) : null;
   }, []);
 
-  return { recordings, loading, add, remove, getObjectUrl, refresh };
+  const beginSession = React.useCallback(() => beginRecordingSession(), []);
+
+  const saveChunk = React.useCallback(
+    (sessionId: string, chunkIndex: number, chunk: Blob) => saveRecordingChunk(sessionId, chunkIndex, chunk),
+    [],
+  );
+
+  const endSession = React.useCallback((sessionId: string) => endRecordingSession(sessionId), []);
+
+  return {
+    recordings,
+    loading,
+    add,
+    remove,
+    getObjectUrl,
+    refresh,
+    beginSession,
+    saveChunk,
+    endSession,
+  };
 }
