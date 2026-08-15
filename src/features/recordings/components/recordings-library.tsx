@@ -15,6 +15,11 @@ import {
 import { RecordingListItem } from "./recording-list-item";
 import type { RecordingMeta } from "../types";
 
+/** Extension de fichier déduite du vrai type MIME du clip — jamais figée en dur (le codec retenu varie selon le navigateur, voir `pickSupportedMimeType`). */
+function extensionFromMimeType(mimeType: string): string {
+  return mimeType.includes("mp4") ? "mp4" : "webm";
+}
+
 interface RecordingsLibraryProps {
   recordings: RecordingMeta[];
   getObjectUrl: (id: string) => Promise<string | null>;
@@ -48,7 +53,7 @@ export function RecordingsLibrary({ recordings, getObjectUrl, onRemove }: Record
     if (!url) return;
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `prompteurflow-${recording.id}.webm`;
+    anchor.download = `prompteurflow-${recording.id}.${extensionFromMimeType(recording.mimeType)}`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();

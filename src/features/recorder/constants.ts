@@ -26,13 +26,14 @@ export const DEFAULT_CAPTURE_SETTINGS: CaptureSettings = {
  * Débit vidéo cible (bits/s) par résolution, passé explicitement à
  * `MediaRecorder`. Sans ça, le navigateur retombe sur un débit générique
  * nettement inférieur à celui d'une appli caméra native, même à résolution
- * égale — c'est la cause identifiée d'un rendu visiblement moins net que la
- * caméra native.
+ * égale. Valeurs relevées à la hausse (vs un premier essai à 2,5/5/10 Mbps,
+ * jugé encore insuffisant) pour se rapprocher des débits qu'une appli
+ * caméra native cible habituellement à ces résolutions.
  */
 export const VIDEO_BITRATE_BY_RESOLUTION: Record<ResolutionPreset, number> = {
-  "480p": 2_500_000,
-  "720p": 5_000_000,
-  "1080p": 10_000_000,
+  "480p": 4_000_000,
+  "720p": 8_000_000,
+  "1080p": 16_000_000,
 };
 
 /** Filtre de style vidéo par défaut (aucun traitement). */
@@ -57,14 +58,23 @@ export const FILTER_PRESETS: Record<VideoFilterId, { label: string; cssFilter: s
 };
 
 /**
- * Formats d'encodage vidéo par ordre de préférence.
- * On retient le premier réellement supporté par le navigateur.
+ * Formats d'encodage vidéo par ordre de préférence. On retient le premier
+ * réellement supporté par le navigateur (`MediaRecorder.isTypeSupported`) —
+ * un candidat non supporté est simplement ignoré, jamais une erreur.
+ *
+ * H.264/mp4 en tête : c'est le codec que la quasi-totalité des puces vidéo
+ * mobiles accélèrent matériellement (le même bloc que l'appli caméra native
+ * utilise), alors que VP8/VP9 tournent souvent en logiciel sur Chrome
+ * Android — plus lent en temps réel, et généralement moins net à débit
+ * égal. Le repli webm reste nécessaire : H.264/mp4 via MediaRecorder n'est
+ * pas disponible partout (support Chrome variable selon la version/l'OS).
  */
 const MIME_CANDIDATES = [
+  "video/mp4;codecs=h264,aac",
+  "video/mp4",
   "video/webm;codecs=vp9,opus",
   "video/webm;codecs=vp8,opus",
   "video/webm",
-  "video/mp4",
 ] as const;
 
 /** Retourne le meilleur type MIME supporté, ou une chaîne vide si indéterminé. */
