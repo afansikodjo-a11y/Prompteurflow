@@ -76,7 +76,7 @@ export function ScriptListItem({
   }
 
   return (
-    <li className={cn("group flex items-center gap-1 rounded-md", active && "bg-accent")}>
+    <li className={cn("flex items-center gap-1 rounded-md", active && "bg-accent")}>
       <button
         type="button"
         onClick={onSelect}
@@ -84,23 +84,12 @@ export function ScriptListItem({
       >
         <span className="truncate">{script.title}</span>
       </button>
-      <Button
-        size="icon"
-        variant="ghost"
-        onClick={() => setEditing(true)}
-        aria-label="Renommer"
-        className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-      >
+      <Button size="icon" variant="ghost" onClick={() => setEditing(true)} aria-label="Renommer">
         <Pencil className="size-4" />
       </Button>
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button
-            size="icon"
-            variant="ghost"
-            aria-label="Supprimer"
-            className="text-destructive opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-          >
+          <Button size="icon" variant="ghost" aria-label="Supprimer" className="text-destructive">
             <Trash2 className="size-4" />
           </Button>
         </AlertDialogTrigger>
