@@ -14,6 +14,18 @@ export interface UseCameraResult {
   start: () => Promise<void>;
   /** Coupe le flux et libère la caméra. */
   stop: () => void;
+  /**
+   * `true` si la piste vidéo s'est interrompue de façon prolongée (>5s)
+   * après un démarrage réussi — caméra coupée/réclamée par le système,
+   * incident matériel, etc. Ni `getUserMedia` ni ce hook ne lèvent d'erreur
+   * dans ce cas : la piste arrête juste de livrer des images, en silence
+   * (constaté : image figée pendant qu'un enregistrement continuait
+   * plusieurs minutes sans que rien ne le signale). Ne se réinitialise que
+   * sur un nouveau `start()` réussi — à l'appelant de réagir (Studio arrête
+   * l'enregistrement en cours proprement, ce qui sauvegarde ce qui a déjà
+   * été capté, et prévient l'utilisateur).
+   */
+  interrupted: boolean;
 }
 
 /** Construit les contraintes `getUserMedia` à partir des réglages de capture. */
@@ -55,18 +67,38 @@ function buildConstraints(settings: CaptureSettings): MediaStreamConstraints {
  * lecture plein écran sans caméra) : le matériel est réellement libéré, pas
  * seulement masqué à l'écran.
  */
+/** Détache les écouteurs posés par ce hook avant de stopper une piste — sans ça, notre propre `.stop()` intentionnel pourrait être pris pour une interruption. */
+function detachTrackWatchers(track: MediaStreamTrack): void {
+  track.onended = null;
+  track.onmute = null;
+  track.onunmute = null;
+}
+
 export function useCamera(settings: CaptureSettings, enabled = true): UseCameraResult {
   const [stream, setStream] = React.useState<MediaStream | null>(null);
   const [status, setStatus] = React.useState<CameraStatus>("idle");
   const [error, setError] = React.useState<string | null>(null);
+  const [interrupted, setInterrupted] = React.useState(false);
   const streamRef = React.useRef<MediaStream | null>(null);
+  const muteTimeoutRef = React.useRef<number | null>(null);
+
+  const clearMuteTimeout = React.useCallback(() => {
+    if (muteTimeoutRef.current !== null) {
+      window.clearTimeout(muteTimeoutRef.current);
+      muteTimeoutRef.current = null;
+    }
+  }, []);
 
   const stop = React.useCallback(() => {
-    streamRef.current?.getTracks().forEach((track) => track.stop());
+    clearMuteTimeout();
+    streamRef.current?.getTracks().forEach((track) => {
+      detachTrackWatchers(track);
+      track.stop();
+    });
     streamRef.current = null;
     setStream(null);
     setStatus("idle");
-  }, []);
+  }, [clearMuteTimeout]);
 
   const start = React.useCallback(async () => {
     if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
@@ -76,7 +108,11 @@ export function useCamera(settings: CaptureSettings, enabled = true): UseCameraR
 
     setStatus("requesting");
     setError(null);
-    streamRef.current?.getTracks().forEach((track) => track.stop());
+    clearMuteTimeout();
+    streamRef.current?.getTracks().forEach((track) => {
+      detachTrackWatchers(track);
+      track.stop();
+    });
 
     try {
       let media: MediaStream;
@@ -97,13 +133,29 @@ export function useCamera(settings: CaptureSettings, enabled = true): UseCameraR
       streamRef.current = media;
       setStream(media);
       setStatus("ready");
+      setInterrupted(false);
+
+      // Surveille la piste vidéo : une caméra coupée/réclamée par le
+      // système ne lève aucune erreur getUserMedia, elle arrête juste de
+      // livrer des images. `mute` peut être transitoire (bref incident) —
+      // on laisse 5s avant de considérer que c'est réellement interrompu,
+      // pour ne pas réagir à un simple à-coup.
+      const [videoTrack] = media.getVideoTracks();
+      if (videoTrack) {
+        videoTrack.onended = () => setInterrupted(true);
+        videoTrack.onmute = () => {
+          clearMuteTimeout();
+          muteTimeoutRef.current = window.setTimeout(() => setInterrupted(true), 5000);
+        };
+        videoTrack.onunmute = () => clearMuteTimeout();
+      }
     } catch (err) {
       const domError = err as DOMException;
       const denied = domError.name === "NotAllowedError" || domError.name === "SecurityError";
       setStatus(denied ? "denied" : "error");
       setError(domError.message || "Impossible d'accéder à la caméra.");
     }
-  }, [settings]);
+  }, [settings, clearMuteTimeout]);
 
   React.useEffect(() => {
     if (!enabled) {
@@ -114,5 +166,5 @@ export function useCamera(settings: CaptureSettings, enabled = true): UseCameraR
     return () => stop();
   }, [enabled, start, stop]);
 
-  return { stream, status, error, start, stop };
+  return { stream, status, error, start, stop, interrupted };
 }

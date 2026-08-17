@@ -312,6 +312,21 @@ export function Studio() {
   // (constaté sur 16 minutes : minuteur qui avance, image figée, son coupé
   // peu après). Actif aussi en pause, tant que la session n'est pas arrêtée.
   useWakeLock(recorder.status !== "idle");
+
+  // Détection d'interruption caméra (voir `camera.interrupted` — mute
+  // prolongé, piste terminée par le système) : le wake lock seul ne suffit
+  // pas à empêcher toute cause de gel (thermique, réclamation matérielle,
+  // etc. — constaté malgré lui). Sans cet arrêt automatique, l'enregistrement
+  // continue "en apparence" (minuteur qui avance) sur une image figée
+  // jusqu'à ce que l'app plante bien plus tard faute de mémoire, sans
+  // jamais prévenir l'utilisateur.
+  const [interruptionNotice, setInterruptionNotice] = React.useState(false);
+  React.useEffect(() => {
+    if (!camera.interrupted || recorder.status === "idle") return;
+    recorder.stop();
+    setInterruptionNotice(true);
+  }, [camera.interrupted, recorder]);
+
   const prompter = useTeleprompter();
   const { ref: containerRef, isFullscreen, toggle: toggleFullscreen } = useFullscreen<HTMLDivElement>();
   const countdown = useCountdown();
@@ -738,6 +753,22 @@ export function Studio() {
           </DialogHeader>
           <DialogFooter>
             <Button onClick={() => setImportError(null)}>Compris</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={interruptionNotice} onOpenChange={(open) => !open && setInterruptionNotice(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enregistrement interrompu</DialogTitle>
+            <DialogDescription>
+              La caméra a été coupée en cours de tournage (mise en veille, incident matériel…).
+              L&apos;enregistrement a été arrêté et ce qui a été capté jusque-là est sauvegardé dans « Mes
+              vidéos ». Relancez une nouvelle prise quand vous êtes prêt.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setInterruptionNotice(false)}>Compris</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
