@@ -82,7 +82,20 @@ export function useBoostedAudio(stream: MediaStream | null): UseBoostedAudioResu
       new MediaStream([...stream.getVideoTracks(), ...destination.stream.getAudioTracks()]),
     );
 
+    // Certains navigateurs suspendent automatiquement un `AudioContext`
+    // quand l'onglet passe en arrière-plan — constaté comme cause probable
+    // d'un micro externe qui coupe en cours d'enregistrement (fonctionnait
+    // au début, silence ensuite). On le relance dès que l'onglet redevient
+    // visible, sans attendre un nouveau geste utilisateur.
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void audioContext.resume().catch(() => {});
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       source.disconnect();
       compressor.disconnect();
       makeupGain.disconnect();

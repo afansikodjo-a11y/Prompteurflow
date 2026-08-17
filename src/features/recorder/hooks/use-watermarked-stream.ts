@@ -46,33 +46,26 @@ export function useWatermarkedStream(
     video.srcObject = source;
     void video.play().catch(() => {});
 
-    // Aligné sur `captureStream(CAPTURE_FPS)` ci-dessous : dessiner plus
-    // souvent que ce que le flux capturé retient ne sert à rien. Sans ce
-    // throttle, la boucle tournait à la fréquence native de l'écran (60Hz+
-    // sur la plupart des téléphones), doublant inutilement le coût de
-    // `drawImage` pleine résolution — constaté comme cause de saccades
-    // vidéo (l'audio, capté hors canvas, restait fluide) dès que le
-    // filigrane engageait ce pipeline.
+    // Cadencé par `setInterval`, pas `requestAnimationFrame` : rAF est
+    // suspendu (ou fortement bridé) par le navigateur dès que l'onglet perd
+    // le premier plan — constaté comme cause d'une image figée en cours
+    // d'enregistrement, indépendamment de l'état de l'écran (le wake lock
+    // n'empêche pas ce cas) et de la santé de la piste caméra elle-même
+    // (aucune erreur, aucun `mute` détectable : c'est notre propre boucle de
+    // dessin qui s'arrête, pas la caméra). `setInterval` continue de se
+    // déclencher en arrière-plan, quitte à être ralenti par le navigateur —
+    // dégradé plutôt que complètement figé jusqu'à la fin de
+    // l'enregistrement. Aligné sur `captureStream(CAPTURE_FPS)` ci-dessous.
     const CAPTURE_FPS = 30;
     const FRAME_INTERVAL_MS = 1000 / CAPTURE_FPS;
-    let lastDrawTime = 0;
-    let frameId: number;
-    const draw = (timestamp: number) => {
-      frameId = requestAnimationFrame(draw);
-      if (timestamp - lastDrawTime < FRAME_INTERVAL_MS) return;
-      lastDrawTime = timestamp;
-
+    const draw = () => {
       // `canvas.width`/`height` valent 300×150 par défaut dès sa création,
       // bien avant que la vidéo n'ait une image décodée : les utiliser seuls
       // comme condition laissait passer un premier appel à `drawImage` avant
-      // que la vidéo soit prête, qui lève `InvalidStateError` et casse la
-      // boucle RAF pour de bon (plus jamais de `requestAnimationFrame`
-      // reprogrammé) — le flux capturé restait alors figé sur un cadre vide
-      // pendant tout l'enregistrement, d'où un enregistrement tout noir avec
-      // l'audio pourtant correct (piste indépendante du canvas). On attend
-      // désormais que la vidéo ait réellement une image (`HAVE_CURRENT_DATA`)
-      // et on protège l'appel par un try/catch pour que la boucle continue
-      // même si un cadre échoue ponctuellement.
+      // que la vidéo soit prête, qui lève `InvalidStateError` — protégé par
+      // le try/catch pour que la boucle continue même si un cadre échoue
+      // ponctuellement. On attend que la vidéo ait réellement une image
+      // (`HAVE_CURRENT_DATA`).
       try {
         if (video.videoWidth && (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight)) {
           canvas.width = video.videoWidth;
@@ -89,17 +82,17 @@ export function useWatermarkedStream(
           ctx.fillText(watermarkText, canvas.width - fontSize * 0.5, canvas.height - fontSize * 0.5);
         }
       } catch {
-        // Cadre ignoré — on retente au prochain rAF plutôt que d'arrêter la boucle.
+        // Cadre ignoré — on retente au prochain intervalle plutôt que d'arrêter la boucle.
       }
     };
-    frameId = requestAnimationFrame(draw);
+    const intervalId = window.setInterval(draw, FRAME_INTERVAL_MS);
 
     const canvasStream = canvas.captureStream(CAPTURE_FPS);
     source.getAudioTracks().forEach((track) => canvasStream.addTrack(track));
     setOutput(canvasStream);
 
     return () => {
-      cancelAnimationFrame(frameId);
+      window.clearInterval(intervalId);
       // Ne stoppe que la piste vidéo générée par le canvas : les pistes audio
       // ajoutées ci-dessus appartiennent à `source` et sont gérées par son
       // propriétaire (`useCamera`) — les arrêter ici couperait le micro.
