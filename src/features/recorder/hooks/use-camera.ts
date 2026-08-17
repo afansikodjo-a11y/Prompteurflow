@@ -35,6 +35,10 @@ function buildConstraints(settings: CaptureSettings): MediaStreamConstraints {
   const video: MediaTrackConstraints = {
     width: { ideal: resolution.width },
     height: { ideal: resolution.height },
+    // Sans ça, le navigateur choisit sa propre cadence par défaut — parfois
+    // plus basse que ce qu'une appli caméra native utilise, ce qui peut
+    // aussi se voir comme un rendu moins net/moins fluide.
+    frameRate: { ideal: 30 },
   };
   if (settings.videoDeviceId) {
     video.deviceId = { exact: settings.videoDeviceId };
