@@ -39,7 +39,15 @@ export function useBoostedAudio(stream: MediaStream | null): UseBoostedAudioResu
       return;
     }
 
-    const audioContext = new AudioContext();
+    // `latencyHint: "playback"` : par défaut ("interactive"), le navigateur
+    // vise le buffer le plus petit possible pour une latence minimale (utile
+    // pour un synthé/chat vocal) — mais un buffer plus petit tolère beaucoup
+    // moins bien la charge processeur, et produit des craquements/parasites
+    // dès qu'un autre traitement (dessin canvas, encodage vidéo) empiète sur
+    // le budget de temps. Ici, la latence ne compte pas (personne n'écoute
+    // en direct) : un buffer plus large et plus tolérant est strictement
+    // préférable.
+    const audioContext = new AudioContext({ latencyHint: "playback" });
     audioContextRef.current = audioContext;
     void audioContext.resume().catch(() => {});
 
@@ -64,12 +72,20 @@ export function useBoostedAudio(stream: MediaStream | null): UseBoostedAudioResu
     const makeupGain = audioContext.createGain();
     makeupGain.gain.value = 2.5;
     // Limiteur : quasi brick-wall, garantit qu'aucun pic ne dépasse ~-1 dB
-    // (≈ 0.9 en amplitude) quel que soit le niveau d'entrée ou le gain ci-dessus.
+    // (≈ 0.9 en amplitude) quel que soit le niveau d'entrée ou le gain
+    // ci-dessus. Attaque assouplie (1 ms → 3 ms) : `DynamicsCompressorNode`
+    // n'a pas d'anticipation ("lookahead") comme un vrai limiteur audio —
+    // une attaque quasi instantanée réagit à un transitoire (consonnes,
+    // "p"/"t"/"k") après coup plutôt qu'en douceur, ce qui s'entend comme un
+    // craquement/parasite plutôt qu'une vraie limitation. 3 ms reste bien
+    // plus rapide que le compresseur principal (3 ms lui aussi, mais en
+    // amont, sur un signal déjà moins dynamique) tout en étant nettement
+    // moins agressif à l'oreille.
     const limiter = audioContext.createDynamicsCompressor();
     limiter.threshold.value = -1;
     limiter.knee.value = 0;
     limiter.ratio.value = 20;
-    limiter.attack.value = 0.001;
+    limiter.attack.value = 0.003;
     limiter.release.value = 0.08;
     const destination = audioContext.createMediaStreamDestination();
 
