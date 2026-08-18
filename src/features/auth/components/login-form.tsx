@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "../hooks/use-auth";
+import { wasQuickAccessOffered, getQuickAccessBlob } from "../lib/quick-access-storage";
+import { QuickAccessSetupDialog } from "./quick-access-setup-dialog";
 
 /** Formulaire de connexion (email + mot de passe). */
 export function LoginForm() {
@@ -17,6 +19,12 @@ export function LoginForm() {
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
+  const [showQuickAccessOffer, setShowQuickAccessOffer] = React.useState(false);
+
+  const goToStudio = () => {
+    router.push("/studio");
+    router.refresh();
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -28,9 +36,17 @@ export function LoginForm() {
       setError(error);
       return;
     }
-    router.push("/studio");
-    router.refresh();
+    // Proposé une seule fois par appareil, jamais si déjà configuré ou refusé.
+    if (!wasQuickAccessOffered() && !getQuickAccessBlob()) {
+      setShowQuickAccessOffer(true);
+      return;
+    }
+    goToStudio();
   };
+
+  if (showQuickAccessOffer) {
+    return <QuickAccessSetupDialog open onDone={goToStudio} />;
+  }
 
   return (
     <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-4">

@@ -5,6 +5,8 @@ export { AuthProvider } from "./components/auth-provider";
 export { AuthSplitPanel } from "./components/auth-split-panel";
 export { ForgotPasswordForm } from "./components/forgot-password-form";
 export { LoginForm } from "./components/login-form";
+export { LoginGate } from "./components/login-gate";
+export { QuickAccessSettingsCard } from "./components/quick-access-settings-card";
 export { ResetPasswordForm } from "./components/reset-password-form";
 export { SignupForm } from "./components/signup-form";
 export { UserMenu } from "./components/user-menu";

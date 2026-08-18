@@ -10,9 +10,12 @@ export default function manifest(): MetadataRoute.Manifest {
     name: siteConfig.name,
     short_name: siteConfig.shortName,
     description: siteConfig.description,
-    // Ouvre directement l'outil, pas la page de vente : un utilisateur qui
-    // installe l'app veut filmer, pas revoir l'argumentaire marketing.
-    start_url: "/studio",
+    // Ouvre sur la connexion, pas la page de vente ni directement l'outil :
+    // une session cookie encore valide redirige aussitôt vers /studio côté
+    // serveur (aucune friction visible) ; sinon, l'utilisateur atterrit sur
+    // la connexion (avec accès rapide par code à 4 chiffres si configuré
+    // sur cet appareil) plutôt que de revoir l'argumentaire marketing.
+    start_url: "/login",
     scope: "/",
     display: "standalone",
     background_color: siteConfig.themeColor.dark,

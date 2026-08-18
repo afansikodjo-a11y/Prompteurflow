@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { QuickAccessSettingsCard } from "@/features/auth";
 import { MySubscriptionCard } from "@/features/subscription";
 import { createClient } from "@/lib/supabase/server";
 
@@ -20,8 +21,9 @@ export default async function SettingsPage() {
     <section className="mx-auto max-w-2xl px-4 py-16">
       <h1 className="text-3xl font-bold tracking-tight">Paramètres</h1>
       <p className="text-muted-foreground mt-2">Votre abonnement et les détails de votre compte.</p>
-      <div className="mt-8">
+      <div className="mt-8 flex flex-col gap-6">
         <MySubscriptionCard />
+        <QuickAccessSettingsCard />
       </div>
     </section>
   );

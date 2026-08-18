@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AuthSplitPanel, LoginForm } from "@/features/auth";
+import { AuthSplitPanel, LoginGate } from "@/features/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function LoginPage() {
@@ -23,7 +23,7 @@ export default async function LoginPage() {
           </Link>
         </p>
       </div>
-      <LoginForm />
+      <LoginGate />
     </AuthSplitPanel>
   );
 }

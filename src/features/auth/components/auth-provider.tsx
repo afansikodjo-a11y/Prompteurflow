@@ -5,6 +5,9 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/client";
 import { resetPasswordForEmail, signIn, signOut, signUp, updatePassword } from "../lib/auth-client";
+import { clearQuickAccessKey } from "../lib/quick-access-key";
+import { resyncQuickAccessBlob } from "../lib/quick-access-sync";
+import { clearQuickAccess } from "../lib/quick-access-storage";
 import type { AuthUser, UseAuthResult } from "../types";
 
 export const AuthContext = React.createContext<UseAuthResult | null>(null);
@@ -43,13 +46,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         void loadProfile(supabase, session.user).then(setUser);
       } else {
         setUser(null);
       }
       setLoading(false);
+
+      // Le refresh token tourne à chaque utilisation (y compris les
+      // rafraîchissements automatiques) — sans cette resynchronisation, un
+      // code d'accès rapide déjà activé cesserait de fonctionner en
+      // silence dès la première rotation. Voir `quick-access-sync.ts`.
+      if ((event === "TOKEN_REFRESHED" || event === "SIGNED_IN") && session?.refresh_token) {
+        void resyncQuickAccessBlob(session.refresh_token);
+      }
+      if (event === "SIGNED_OUT") {
+        clearQuickAccess();
+        clearQuickAccessKey();
+      }
     });
 
     return () => listener.subscription.unsubscribe();
