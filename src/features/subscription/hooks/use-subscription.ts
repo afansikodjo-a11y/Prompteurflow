@@ -34,6 +34,10 @@ interface SubscriptionRow {
  * tarifs coupés) donne à tout le monde les limites du plan Pro, connecté ou
  * non — sans ça, un testeur Basique buterait sur une limite sans aucun
  * moyen de payer, ni même de créer un compte, pour la lever.
+ *
+ * Exception permanente : un compte admin (`profiles.role`) a toujours les
+ * limites du plan Pro, sans abonnement réel — un admin gère l'app, il n'a
+ * pas à se payer lui-même pour l'utiliser.
  */
 export function useSubscription(): UseSubscriptionResult {
   const { user, loading: authLoading } = useAuth();
@@ -47,9 +51,10 @@ export function useSubscription(): UseSubscriptionResult {
     let cancelled = false;
 
     async function resolve() {
-      let planId: PlanId = FEATURE_FLAGS.openAccess ? PRO_PLAN_ID : BASIC_PLAN_ID;
+      const isAdmin = user?.role === "admin";
+      let planId: PlanId = FEATURE_FLAGS.openAccess || isAdmin ? PRO_PLAN_ID : BASIC_PLAN_ID;
 
-      if (!FEATURE_FLAGS.openAccess && user) {
+      if (!FEATURE_FLAGS.openAccess && !isAdmin && user) {
         const supabase = createClient();
         const { data } = await supabase
           .from("subscriptions")
