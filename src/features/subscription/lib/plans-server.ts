@@ -47,6 +47,9 @@ function rowToPlan(row: PlanRow): Plan {
  * `is_active` : c'est la vitrine publique, contrairement à `getAllPlans()`
  * (admin, doit tout voir) et `getPlan(id)` (doit résoudre même un plan
  * désactivé pour un abonnement existant).
+ *
+ * Tri secondaire sur `id` pour un ordre stable même à prix égal (voir
+ * `getAllPlans()`).
  */
 export async function getAllPlansServer(): Promise<Plan[]> {
   const supabase = await createClient();
@@ -54,7 +57,8 @@ export async function getAllPlansServer(): Promise<Plan[]> {
     .from("plans")
     .select(COLUMNS)
     .eq("is_active", true)
-    .order("price_xof");
+    .order("price_xof")
+    .order("id");
   if (error || !data) return [];
   return (data as PlanRow[]).map(rowToPlan);
 }

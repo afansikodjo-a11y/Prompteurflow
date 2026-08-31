@@ -1,5 +1,6 @@
 /**
- * Types du domaine « subscription » (plans Basique/Standard/Pro).
+ * Types du domaine « subscription » (plans Découverte/Pro — Standard retiré
+ * de la vente, gardé en base pour l'historique).
  */
 export type PlanId = "basic" | "standard" | "pro";
 

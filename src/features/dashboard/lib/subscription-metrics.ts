@@ -10,7 +10,7 @@ export interface PlanDistributionRow {
 
 /**
  * Nombre d'abonnements `active` par plan, dans l'ordre de `plans` (prix
- * croissant — Basique/Standard/Pro).
+ * croissant).
  *
  * Note pour l'appelant : tant que `FEATURE_FLAGS.openAccess` (voir
  * `src/config/flags.ts`) est actif, ces chiffres ne reflètent pas de vrais

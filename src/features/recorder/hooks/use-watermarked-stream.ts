@@ -16,7 +16,7 @@ import * as React from "react";
  * — c'est aussi ce qui donne aux comptes payants (jamais de filigrane) un
  * enregistrement capté directement, sans passer par ce pipeline.
  *
- * @param watermarkText Texte de filigrane (plan Basique) posé en bas à droite ; `undefined`/vide = pas de filigrane (Pro).
+ * @param watermarkText Texte de filigrane (plan Découverte) posé en bas à droite ; `undefined`/vide = pas de filigrane (Pro).
  */
 export function useWatermarkedStream(
   source: MediaStream | null,

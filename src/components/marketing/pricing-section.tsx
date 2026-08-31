@@ -12,7 +12,6 @@ import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { useAuth } from "@/features/auth";
 import {
   AnnualSavingsChoice,
-  BASIC_PLAN_ID,
   formatXof,
   planFeatureLines,
   PRO_PLAN_ID,
@@ -27,8 +26,8 @@ const SUPPORT_MESSAGE = "Bonjour, je n'arrive pas à m'abonner sur PrompteurFlow
 
 /**
  * Prix à afficher pour un plan selon la période choisie. Replie sur le
- * mensuel si le plan n'a pas de palier annuel (ex. Basique, gratuit) — le
- * bouton mensuel/annuel n'a alors aucun effet visuel sur cette carte.
+ * mensuel si le plan n'a pas de palier annuel (ex. Découverte) — le bouton
+ * mensuel/annuel n'a alors aucun effet visuel sur cette carte.
  */
 function resolvePrice(plan: Plan, period: BillingPeriod) {
   const useAnnual = period === "annual" && plan.annualPriceXof !== null;
@@ -56,7 +55,7 @@ export function PricingSection({ plans }: PricingSectionProps) {
   const [upsellPlan, setUpsellPlan] = React.useState<Plan | null>(null);
   const hasAnnualOption = plans.some((plan) => plan.annualPriceXof !== null);
 
-  const runCheckout = async (planId: Exclude<PlanId, "basic">, billingPeriod: BillingPeriod) => {
+  const runCheckout = async (planId: Exclude<PlanId, "standard">, billingPeriod: BillingPeriod) => {
     setCheckoutError(null);
     setLoadingPlanId(planId);
     setPendingPeriod(billingPeriod);
@@ -76,7 +75,7 @@ export function PricingSection({ plans }: PricingSectionProps) {
       setUpsellPlan(plan);
       return;
     }
-    void runCheckout(plan.id as Exclude<PlanId, "basic">, period);
+    void runCheckout(plan.id as Exclude<PlanId, "standard">, period);
   };
 
   return (
@@ -87,7 +86,7 @@ export function PricingSection({ plans }: PricingSectionProps) {
             Choisissez votre formule
           </h2>
           <p className="mt-4 text-lg text-pretty text-neutral-400">
-            Commencez gratuitement, passez à la vitesse supérieure quand vous en avez besoin.
+            Deux formules simples, sans engagement — choisissez celle qui vous correspond.
           </p>
         </Reveal>
 
@@ -130,7 +129,6 @@ export function PricingSection({ plans }: PricingSectionProps) {
               const highlighted = plan.id === PRO_PLAN_ID;
               const price = resolvePrice(plan, period);
               const showBarred = price.barred !== null && price.barred > price.amount;
-              const isBasic = plan.id === BASIC_PLAN_ID;
               const isLoading = loadingPlanId === plan.id;
               return (
                 <Reveal key={plan.id} delay={index * 0.08}>
@@ -169,18 +167,7 @@ export function PricingSection({ plans }: PricingSectionProps) {
                       ))}
                     </ul>
 
-                    {isBasic ? (
-                      <Button
-                        asChild
-                        className={cn(
-                          highlighted
-                            ? "bg-brand shadow-brand/30 hover:bg-brand-bright text-black shadow-lg"
-                            : "border border-white/15 bg-white/5 text-white hover:bg-white/10",
-                        )}
-                      >
-                        <Link href="/studio">Commencer gratuitement</Link>
-                      </Button>
-                    ) : !user ? (
+                    {!user ? (
                       <Button
                         asChild
                         className={cn(
@@ -240,7 +227,7 @@ export function PricingSection({ plans }: PricingSectionProps) {
               <AnnualSavingsChoice
                 plan={upsellPlan}
                 pendingPeriod={pendingPeriod}
-                onChoose={(chosenPeriod) => void runCheckout(upsellPlan.id as Exclude<PlanId, "basic">, chosenPeriod)}
+                onChoose={(chosenPeriod) => void runCheckout(upsellPlan.id as Exclude<PlanId, "standard">, chosenPeriod)}
               />
             </>
           )}

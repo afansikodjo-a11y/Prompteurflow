@@ -4,7 +4,7 @@ export type StartCheckoutResult = { ok: true; checkoutUrl: string } | { ok: fals
 
 /** Démarre un checkout Moneroo pour un plan payant — le résultat contient l'URL vers laquelle rediriger. */
 export async function startCheckout(
-  planId: Exclude<PlanId, "basic">,
+  planId: Exclude<PlanId, "standard">,
   billingPeriod: BillingPeriod,
 ): Promise<StartCheckoutResult> {
   try {

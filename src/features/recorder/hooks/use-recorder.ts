@@ -27,8 +27,8 @@ export interface UseRecorderOptions {
   /** Appelé à l'arrêt avec le clip final et sa durée (secondes) — ex. pour le persister. */
   onComplete?: (blob: Blob, durationSec: number) => void;
   /**
-   * Durée max d'enregistrement, en secondes (plan Basique) — l'enregistrement
-   * s'arrête automatiquement à ce plafond. `undefined` = illimité (Standard/Pro).
+   * Durée max d'enregistrement, en secondes (plan Découverte) — l'enregistrement
+   * s'arrête automatiquement à ce plafond. `undefined` = illimité (Pro).
    */
   maxDurationSec?: number;
   /** Résolution de capture courante — détermine le débit vidéo cible (voir `VIDEO_BITRATE_BY_RESOLUTION`). */
@@ -108,7 +108,7 @@ export function useRecorder(
     stopTimer();
   }, [stopTimer]);
 
-  // Le plafond de durée (plan Basique) est vérifié ici, dans le callback du
+  // Le plafond de durée (plan Découverte) est vérifié ici, dans le callback du
   // timer lui-même — jamais dans l'updater fonctionnel passé à `setElapsed`,
   // qui doit rester pur (React peut l'invoquer plusieurs fois, notamment en
   // StrictMode) et ne peut donc pas déclencher l'arrêt de l'enregistrement.

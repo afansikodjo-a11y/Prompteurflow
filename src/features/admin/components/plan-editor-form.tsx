@@ -191,8 +191,8 @@ function PlanCard({ plan, onSave }: PlanCardProps) {
 }
 
 /**
- * Formulaire admin d'édition des plans tarifaires (Basique/Standard/Pro) :
- * prix XOF et limites, éditables à chaud sans déploiement de code.
+ * Formulaire admin d'édition des plans tarifaires (Découverte/Pro) : prix
+ * XOF et limites, éditables à chaud sans déploiement de code.
  */
 export function PlanEditorForm() {
   const { plans, loading, update } = useAdminPlans();

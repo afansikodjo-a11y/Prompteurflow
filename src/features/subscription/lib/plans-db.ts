@@ -44,10 +44,15 @@ export async function getPlan(id: PlanId): Promise<Plan | null> {
   return rowToPlan(data as PlanRow);
 }
 
-/** Retourne tous les plans, dans l'ordre Basique/Standard/Pro (prix croissant). */
+/**
+ * Retourne tous les plans, par prix croissant — tri secondaire sur `id` pour
+ * un ordre stable même à prix égal (ex. Découverte/Pro actuellement au même
+ * prix mensuel), au lieu de dépendre de l'ordre de retour non garanti de
+ * Postgres.
+ */
 export async function getAllPlans(): Promise<Plan[]> {
   const supabase = createClient();
-  const { data, error } = await supabase.from("plans").select(COLUMNS).order("price_xof");
+  const { data, error } = await supabase.from("plans").select(COLUMNS).order("price_xof").order("id");
   if (error || !data) return [];
   return (data as PlanRow[]).map(rowToPlan);
 }

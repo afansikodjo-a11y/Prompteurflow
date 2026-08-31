@@ -9,6 +9,8 @@ export interface AuthUser {
   role: "user" | "admin";
   /** Programme d'affiliation activé pour ce compte (sur demande, par un admin). */
   isAffiliate: boolean;
+  /** `profiles.created_at` — sert au grandfathering de l'accès gratuit historique (voir `useSubscription`). */
+  createdAt: string;
 }
 
 export interface UseAuthResult {

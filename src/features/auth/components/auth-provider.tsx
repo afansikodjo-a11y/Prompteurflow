@@ -16,7 +16,7 @@ export const AuthContext = React.createContext<UseAuthResult | null>(null);
 async function loadProfile(supabase: SupabaseClient, authUser: User): Promise<AuthUser> {
   const { data } = await supabase
     .from("profiles")
-    .select("role, is_affiliate")
+    .select("role, is_affiliate, created_at")
     .eq("id", authUser.id)
     .single();
   return {
@@ -24,6 +24,7 @@ async function loadProfile(supabase: SupabaseClient, authUser: User): Promise<Au
     email: authUser.email ?? "",
     role: data?.role === "admin" ? "admin" : "user",
     isAffiliate: data?.is_affiliate ?? false,
+    createdAt: data?.created_at ?? authUser.created_at,
   };
 }
 

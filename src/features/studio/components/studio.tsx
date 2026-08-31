@@ -63,7 +63,6 @@ import {
   useSubscription,
   type BillingPeriod,
   type Plan,
-  type PlanId,
 } from "@/features/subscription";
 import {
   DEFAULT_SCRIPT,
@@ -74,22 +73,22 @@ import {
   useTeleprompter,
 } from "@/features/teleprompter";
 
-/** Raison de la relance d'upgrade affichée à l'utilisateur (plan Basique). */
+/** Raison de la relance d'upgrade affichée à l'utilisateur (plan Découverte). */
 type UpgradeReason = "scripts" | "duration" | "import" | "aiWriter" | null;
 
 const UPGRADE_MESSAGES: Record<
   Exclude<UpgradeReason, null>,
-  { title: string; description: string; planId: Exclude<PlanId, "basic">; planLabel: string }
+  { title: string; description: string; planId: "pro"; planLabel: string }
 > = {
   scripts: {
     title: "Limite de scripts atteinte",
-    description: "Le plan Basique est limité à quelques scripts sauvegardés. Passez au plan Pro pour un nombre illimité.",
+    description: "Le plan Découverte est limité à quelques scripts sauvegardés. Passez au plan Pro pour un nombre illimité.",
     planId: "pro",
     planLabel: "Pro",
   },
   duration: {
     title: "Durée maximale atteinte",
-    description: "Le plan Basique limite la durée d'un enregistrement. Passez au plan Pro pour enregistrer sans limite.",
+    description: "Le plan Découverte limite la durée d'un enregistrement. Passez au plan Pro pour enregistrer sans limite.",
     planId: "pro",
     planLabel: "Pro",
   },
@@ -199,8 +198,12 @@ function RollButton({
  *
  * La scène (zone vidéo) est volontairement sombre — c'est un plateau —
  * tandis que la barre de contrôles reste fidèle au thème (clair/sombre).
+ *
+ * N'active caméra/micro (via les hooks ci-dessous) que pour un utilisateur
+ * qui a réellement le droit d'utiliser le studio — voir le composant
+ * `Studio` en bas de fichier, qui fait ce tri avant de monter celui-ci.
  */
-export function Studio() {
+function StudioApp() {
   const { user } = useAuth();
   const { plan } = useSubscription();
   const [upgradeReason, setUpgradeReason] = React.useState<UpgradeReason>(null);
@@ -208,7 +211,7 @@ export function Studio() {
   const [upgradeCheckoutError, setUpgradeCheckoutError] = React.useState<string | null>(null);
   const [importError, setImportError] = React.useState<string | null>(null);
   // Prix du plan Pro (pas forcément celui de `plan` ci-dessus, qui reflète
-  // le plan COURANT de l'utilisateur — Basique la plupart du temps ici) :
+  // le plan COURANT de l'utilisateur — Découverte la plupart du temps ici) :
   // nécessaire pour proposer l'économie annuelle dans la modale d'upgrade.
   const [proPlan, setProPlan] = React.useState<Plan | null>(null);
 
@@ -226,7 +229,7 @@ export function Studio() {
   // renvoyer vers la landing marketing : `MarketingHeader` ignore l'état de
   // connexion et affiche toujours "Connexion", ce qui donnait l'impression
   // trompeuse d'être déconnecté en plus de quitter le studio.
-  const handleUpgradeCheckout = async (planId: Exclude<PlanId, "basic">, billingPeriod: BillingPeriod) => {
+  const handleUpgradeCheckout = async (planId: "pro", billingPeriod: BillingPeriod) => {
     setUpgradeCheckoutError(null);
     setPendingPeriod(billingPeriod);
     const result = await startCheckout(planId, billingPeriod);
@@ -260,12 +263,12 @@ export function Studio() {
   // fin d'enregistrement) : le pipeline canvas est coûteux (dessin de chaque
   // frame + ré-encodage), on évite de le faire tourner en continu pendant le
   // simple cadrage/aperçu, sans quoi c'est le pipeline par défaut du plan
-  // Basique en permanence dès que la caméra est allumée — constaté comme
+  // Découverte en permanence dès que la caméra est allumée — constaté comme
   // cause probable de surchauffe/décharge batterie rapide sur téléphone.
   const [captureActive, setCaptureActive] = React.useState(false);
-  // Le filigrane du plan Basique (seulement pendant la capture) est gravé
+  // Le filigrane du plan Découverte (seulement pendant la capture) est gravé
   // dans les pixels ici, en amont de l'aperçu ET de l'enregistrement, pour
-  // que les deux montrent/capturent le même rendu. Un compte payant
+  // que les deux montrent/capturent le même rendu. Un compte Pro
   // (`plan.watermark` faux) ne passe jamais par ce pipeline : le flux
   // caméra part directement à l'enregistreur, sans perte de génération.
   const watermarkedStream = useWatermarkedStream(
@@ -334,7 +337,7 @@ export function Studio() {
   // Référence toujours à jour vers recorder/prompter, pour que le callback
   // différé du décompte (3s, ci-dessous) utilise l'état réellement courant
   // au moment où il se déclenche — jamais celui figé au clic sur « Tourner ».
-  // Sans ça : le filigrane du plan Basique s'active pile au moment où
+  // Sans ça : le filigrane du plan Découverte s'active pile au moment où
   // `captureActive` passe à `true`, ce qui reconstruit le pipeline canvas
   // (`useWatermarkedStream`) entre le clic et la fin du décompte — l'ancien
   // flux capturé au clic a alors sa piste vidéo déjà arrêtée par ce
@@ -774,4 +777,53 @@ export function Studio() {
       </Dialog>
     </div>
   );
+}
+
+/**
+ * Écran affiché à la place du studio quand `hasAccess` est faux : visiteur
+ * anonyme, ou compte créé après la fin du plan gratuit et sans abonnement
+ * actif (voir `useSubscription`). Un compte grandfathered (créé avant la
+ * coupure) ne passe jamais par ici.
+ */
+function StudioPaywall({ isAuthenticated }: { isAuthenticated: boolean }) {
+  return (
+    <div className="bg-background flex h-[calc(100dvh-3.5rem)] flex-col items-center justify-center gap-4 px-4 text-center">
+      <h1 className="text-xl font-semibold">
+        {isAuthenticated ? "Choisissez votre formule" : "Créez votre compte pour commencer"}
+      </h1>
+      <p className="text-muted-foreground max-w-sm text-sm">
+        {isAuthenticated
+          ? "Aucun abonnement actif sur ce compte. Choisissez la formule Découverte ou Pro pour utiliser le studio."
+          : "Le studio est réservé aux comptes abonnés — formule Découverte ou Pro, à partir de 2 500 XOF/mois."}
+      </p>
+      <Button asChild>
+        <Link href={isAuthenticated ? "/#pricing" : "/signup"}>
+          {isAuthenticated ? "Voir les formules" : "Créer un compte"}
+        </Link>
+      </Button>
+      {!isAuthenticated && (
+        <Link href="/#pricing" className="text-brand-bright text-sm underline">
+          Voir les tarifs
+        </Link>
+      )}
+    </div>
+  );
+}
+
+/** Point d'entrée de la feature studio : n'admet `StudioApp` (caméra, micro, enregistreur) qu'une fois l'accès confirmé. */
+export function Studio() {
+  const { user } = useAuth();
+  const { hasAccess, loading } = useSubscription();
+
+  if (loading) {
+    return (
+      <div className="bg-background flex h-[calc(100dvh-3.5rem)] items-center justify-center">
+        <p className="text-muted-foreground text-sm">Chargement…</p>
+      </div>
+    );
+  }
+
+  if (!hasAccess) return <StudioPaywall isAuthenticated={Boolean(user)} />;
+
+  return <StudioApp />;
 }

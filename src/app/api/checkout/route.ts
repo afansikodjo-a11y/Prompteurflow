@@ -10,16 +10,16 @@ export const maxDuration = 30;
 
 type BillingPeriod = "monthly" | "annual";
 
-const PLAN_NAMES: Record<string, string> = { pro: "Pro" };
+const PLAN_NAMES: Record<string, string> = { basic: "Découverte", pro: "Pro" };
 
 function errorResponse(status: number, error: string) {
   return NextResponse.json({ error }, { status });
 }
 
-function validate(body: unknown): { planId: "pro"; billingPeriod: BillingPeriod } | null {
+function validate(body: unknown): { planId: "basic" | "pro"; billingPeriod: BillingPeriod } | null {
   if (typeof body !== "object" || body === null) return null;
   const record = body as Record<string, unknown>;
-  if (record.planId !== "pro") return null;
+  if (record.planId !== "basic" && record.planId !== "pro") return null;
   if (record.billingPeriod !== "monthly" && record.billingPeriod !== "annual") return null;
   return { planId: record.planId, billingPeriod: record.billingPeriod };
 }

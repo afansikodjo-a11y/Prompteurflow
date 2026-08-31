@@ -21,7 +21,7 @@ export interface UseScriptsResult {
   select: (id: string) => void;
   /**
    * Crée un script (vide, ou depuis `input` — ex. import de fichier), le
-   * sélectionne et retourne son id ; `null` si le plafond (plan Basique) est atteint.
+   * sélectionne et retourne son id ; `null` si le plafond (plan Découverte) est atteint.
    */
   create: (input?: Partial<Pick<Script, "title" | "content">>) => string | null;
   rename: (id: string, title: string) => void;
@@ -59,7 +59,7 @@ function createScript(input?: Partial<Pick<Script, "title" | "content">>): Scrip
  * plus tard ne changerait que l'implémentation ici, pas les composants.
  *
  * @param seedContent Contenu du script créé automatiquement au premier lancement.
- * @param maxScripts Nombre max de scripts (plan Basique) ; `undefined` = illimité (Standard/Pro).
+ * @param maxScripts Nombre max de scripts (plan Découverte) ; `undefined` = illimité (Pro).
  */
 export function useScripts(seedContent = "", maxScripts?: number): UseScriptsResult {
   const [scripts, setScripts, hydrated] = useLocalStorage<Script[]>(SCRIPTS_STORAGE_KEY, []);

@@ -11,7 +11,7 @@ export interface UseAdminPlansResult {
   refresh: () => Promise<void>;
 }
 
-/** Gère les plans tarifaires (Basique/Standard/Pro) pour le panneau admin. */
+/** Gère les plans tarifaires (Découverte/Pro) pour le panneau admin. */
 export function useAdminPlans(): UseAdminPlansResult {
   const [plans, setPlans] = React.useState<Plan[]>([]);
   const [loading, setLoading] = React.useState(true);

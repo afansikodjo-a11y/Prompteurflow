@@ -1,5 +1,6 @@
 /**
- * API publique de la feature « subscription » (plans Basique/Standard/Pro).
+ * API publique de la feature « subscription » (plans Découverte/Pro —
+ * Standard retiré de la vente, gardé en base pour l'historique).
  */
 export { useSubscription, type UseSubscriptionResult } from "./hooks/use-subscription";
 export { useMySubscriptionDetails, type MySubscriptionDetails, type MySubscriptionStatus } from "./hooks/use-my-subscription-details";
