@@ -56,6 +56,24 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             });
           `}
         </Script>
+        {/* Filet de sécurité pour l'app installée : le `start_url` du manifest
+            (`/login`) n'est pas toujours respecté (iOS ignore souvent le
+            manifest et rouvre l'URL active au moment de l'ajout à l'écran
+            d'accueil ; une icône installée avant ce réglage garde aussi
+            l'ancienne cible en cache). Si on atterrit malgré tout sur "/" en
+            mode standalone, on rebascule aussitôt vers /login, qui renvoie
+            lui-même droit sur /studio si la session est encore valide. */}
+        <Script id="pwa-standalone-home-redirect" strategy="beforeInteractive">
+          {`
+            (function () {
+              var isStandalone =
+                window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+              if (isStandalone && window.location.pathname === "/") {
+                window.location.replace("/login");
+              }
+            })();
+          `}
+        </Script>
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

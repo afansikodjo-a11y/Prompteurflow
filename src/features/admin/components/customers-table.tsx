@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { MailCheck, MessageCircle } from "lucide-react";
+import { MailCheck, MessageCircle, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,14 +23,18 @@ interface CustomerRowProps {
   onSavePhone: (phone: string) => Promise<void>;
   onToggleStatus: () => Promise<{ error: string | null }>;
   onConfirmEmail: () => Promise<{ error: string | null }>;
+  onActivatePro: (billingPeriod: "monthly" | "annual") => Promise<{ error: string | null }>;
 }
 
-function CustomerRow({ customer, onSavePhone, onToggleStatus, onConfirmEmail }: CustomerRowProps) {
+function CustomerRow({ customer, onSavePhone, onToggleStatus, onConfirmEmail, onActivatePro }: CustomerRowProps) {
   const [phoneDraft, setPhoneDraft] = React.useState(customer.phone ?? "");
   const [toggleError, setToggleError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [confirmState, setConfirmState] = React.useState<"idle" | "busy" | "done" | "error">("idle");
   const [confirmError, setConfirmError] = React.useState<string | null>(null);
+  const [proPeriod, setProPeriod] = React.useState<"monthly" | "annual" | null>(null);
+  const [proState, setProState] = React.useState<"idle" | "done">("idle");
+  const [proError, setProError] = React.useState<string | null>(null);
 
   React.useEffect(() => setPhoneDraft(customer.phone ?? ""), [customer.phone]);
 
@@ -57,6 +61,18 @@ function CustomerRow({ customer, onSavePhone, onToggleStatus, onConfirmEmail }: 
       return;
     }
     setConfirmState("done");
+  };
+
+  const handleActivatePro = async (billingPeriod: "monthly" | "annual") => {
+    setProPeriod(billingPeriod);
+    setProError(null);
+    const { error } = await onActivatePro(billingPeriod);
+    setProPeriod(null);
+    if (error) {
+      setProError(error);
+      return;
+    }
+    setProState("done");
   };
 
   const isDisabled = customer.disabledAt !== null;
@@ -120,9 +136,31 @@ function CustomerRow({ customer, onSavePhone, onToggleStatus, onConfirmEmail }: 
           >
             {isDisabled ? "Réactiver" : "Désactiver"}
           </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => void handleActivatePro("monthly")}
+            disabled={proPeriod !== null}
+          >
+            <Sparkles className="size-4" />
+            Pro 1 mois
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => void handleActivatePro("annual")}
+            disabled={proPeriod !== null}
+          >
+            <Sparkles className="size-4" />
+            Pro 1 an
+          </Button>
         </div>
         {toggleError && <p className="text-destructive mt-1 text-xs">{toggleError}</p>}
         {confirmError && <p className="text-destructive mt-1 text-xs">{confirmError}</p>}
+        {proState === "done" && !proError && <p className="text-brand-bright mt-1 text-xs">Pro activé.</p>}
+        {proError && <p className="text-destructive mt-1 text-xs">{proError}</p>}
       </td>
     </tr>
   );
@@ -130,7 +168,7 @@ function CustomerRow({ customer, onSavePhone, onToggleStatus, onConfirmEmail }: 
 
 /** Table complète des clients — téléphone éditable, relance WhatsApp, activation/désactivation de compte. */
 export function CustomersTable() {
-  const { customers, loading, updatePhone, toggleStatus, confirmEmail } = useAdminCustomers();
+  const { customers, loading, updatePhone, toggleStatus, confirmEmail, activatePro } = useAdminCustomers();
 
   if (loading) return <p className="text-muted-foreground text-sm">Chargement…</p>;
   if (customers.length === 0) {
@@ -157,6 +195,7 @@ export function CustomersTable() {
               onSavePhone={(phone) => updatePhone(customer.id, phone)}
               onToggleStatus={() => toggleStatus(customer.id, !customer.disabledAt)}
               onConfirmEmail={() => confirmEmail(customer.id)}
+              onActivatePro={(billingPeriod) => activatePro(customer.id, billingPeriod)}
             />
           ))}
         </tbody>

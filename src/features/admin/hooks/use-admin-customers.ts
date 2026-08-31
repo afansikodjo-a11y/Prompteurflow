@@ -11,6 +11,7 @@ export interface UseAdminCustomersResult {
   updatePhone: (id: string, phone: string) => Promise<void>;
   toggleStatus: (id: string, disabled: boolean) => Promise<{ error: string | null }>;
   confirmEmail: (id: string) => Promise<{ error: string | null }>;
+  activatePro: (id: string, billingPeriod: "monthly" | "annual") => Promise<{ error: string | null }>;
 }
 
 interface CustomerRow {
@@ -101,5 +102,26 @@ export function useAdminCustomers(): UseAdminCustomersResult {
     }
   }, []);
 
-  return { customers, loading, updatePhone, toggleStatus, confirmEmail };
+  const activatePro = React.useCallback(
+    async (id: string, billingPeriod: "monthly" | "annual"): Promise<{ error: string | null }> => {
+      try {
+        const response = await fetch("/api/admin/customers/activate-pro", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: id, billingPeriod }),
+        });
+        const body = await response.json();
+        if (!response.ok) {
+          return { error: body.error ?? "Impossible d'activer le plan Pro." };
+        }
+        await refresh();
+        return { error: null };
+      } catch {
+        return { error: "Impossible de contacter le serveur. Vérifiez votre connexion." };
+      }
+    },
+    [refresh],
+  );
+
+  return { customers, loading, updatePhone, toggleStatus, confirmEmail, activatePro };
 }
