@@ -37,7 +37,7 @@ export function SignupForm() {
       <div className="border-brand bg-brand/10 rounded-lg border-2 p-4">
         <p className="text-sm">
           🎉 Bravo, votre compte est créé ! Pour le finaliser, confirmez votre adresse en cliquant sur le lien reçu
-          dans l&apos;email qu&apos;on vient de vous envoyer, puis{" "}
+          dans l&apos;email qu&apos;on vient de vous envoyer (pensez à vérifier vos spams), puis{" "}
           <Link href="/login" className="underline">
             connectez-vous
           </Link>
