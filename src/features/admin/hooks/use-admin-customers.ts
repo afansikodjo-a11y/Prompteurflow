@@ -12,6 +12,7 @@ export interface UseAdminCustomersResult {
   toggleStatus: (id: string, disabled: boolean) => Promise<{ error: string | null }>;
   confirmEmail: (id: string) => Promise<{ error: string | null }>;
   activatePro: (id: string, billingPeriod: "monthly" | "annual") => Promise<{ error: string | null }>;
+  deleteCustomer: (id: string) => Promise<{ error: string | null }>;
 }
 
 interface CustomerRow {
@@ -123,5 +124,26 @@ export function useAdminCustomers(): UseAdminCustomersResult {
     [refresh],
   );
 
-  return { customers, loading, updatePhone, toggleStatus, confirmEmail, activatePro };
+  const deleteCustomer = React.useCallback(
+    async (id: string): Promise<{ error: string | null }> => {
+      try {
+        const response = await fetch("/api/admin/customers/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: id }),
+        });
+        const body = await response.json();
+        if (!response.ok) {
+          return { error: body.error ?? "Impossible de supprimer ce compte." };
+        }
+        await refresh();
+        return { error: null };
+      } catch {
+        return { error: "Impossible de contacter le serveur. Vérifiez votre connexion." };
+      }
+    },
+    [refresh],
+  );
+
+  return { customers, loading, updatePhone, toggleStatus, confirmEmail, activatePro, deleteCustomer };
 }

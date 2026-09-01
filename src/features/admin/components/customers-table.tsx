@@ -1,10 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { MailCheck, MessageCircle, Sparkles } from "lucide-react";
+import { MailCheck, MessageCircle, Sparkles, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { useAdminCustomers } from "../hooks/use-admin-customers";
 import type { AdminCustomerRow } from "../types";
@@ -24,9 +35,10 @@ interface CustomerRowProps {
   onToggleStatus: () => Promise<{ error: string | null }>;
   onConfirmEmail: () => Promise<{ error: string | null }>;
   onActivatePro: (billingPeriod: "monthly" | "annual") => Promise<{ error: string | null }>;
+  onDelete: () => Promise<{ error: string | null }>;
 }
 
-function CustomerRow({ customer, onSavePhone, onToggleStatus, onConfirmEmail, onActivatePro }: CustomerRowProps) {
+function CustomerRow({ customer, onSavePhone, onToggleStatus, onConfirmEmail, onActivatePro, onDelete }: CustomerRowProps) {
   const [phoneDraft, setPhoneDraft] = React.useState(customer.phone ?? "");
   const [toggleError, setToggleError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
@@ -35,6 +47,8 @@ function CustomerRow({ customer, onSavePhone, onToggleStatus, onConfirmEmail, on
   const [proPeriod, setProPeriod] = React.useState<"monthly" | "annual" | null>(null);
   const [proState, setProState] = React.useState<"idle" | "done">("idle");
   const [proError, setProError] = React.useState<string | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
+  const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
   React.useEffect(() => setPhoneDraft(customer.phone ?? ""), [customer.phone]);
 
@@ -73,6 +87,14 @@ function CustomerRow({ customer, onSavePhone, onToggleStatus, onConfirmEmail, on
       return;
     }
     setProState("done");
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setDeleteError(null);
+    const { error } = await onDelete();
+    setDeleting(false);
+    if (error) setDeleteError(error);
   };
 
   const isDisabled = customer.disabledAt !== null;
@@ -156,11 +178,47 @@ function CustomerRow({ customer, onSavePhone, onToggleStatus, onConfirmEmail, on
             <Sparkles className="size-4" />
             Pro 1 an
           </Button>
+          {isDisabled && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="text-destructive hover:text-destructive"
+                  disabled={deleting}
+                >
+                  <Trash2 className="size-4" />
+                  Supprimer
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Supprimer ce compte ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Le compte {customer.email || "(sans email)"} sera définitivement supprimé, y compris son
+                    historique d&apos;abonnements, de paiements et de commissions d&apos;affiliation. Cette action
+                    est irréversible.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => void handleDelete()}
+                    className="bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/40 text-white"
+                  >
+                    Supprimer définitivement
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
         {toggleError && <p className="text-destructive mt-1 text-xs">{toggleError}</p>}
         {confirmError && <p className="text-destructive mt-1 text-xs">{confirmError}</p>}
         {proState === "done" && !proError && <p className="text-brand-bright mt-1 text-xs">Pro activé.</p>}
         {proError && <p className="text-destructive mt-1 text-xs">{proError}</p>}
+        {deleteError && <p className="text-destructive mt-1 text-xs">{deleteError}</p>}
       </td>
     </tr>
   );
@@ -168,7 +226,7 @@ function CustomerRow({ customer, onSavePhone, onToggleStatus, onConfirmEmail, on
 
 /** Table complète des clients — téléphone éditable, relance WhatsApp, activation/désactivation de compte. */
 export function CustomersTable() {
-  const { customers, loading, updatePhone, toggleStatus, confirmEmail, activatePro } = useAdminCustomers();
+  const { customers, loading, updatePhone, toggleStatus, confirmEmail, activatePro, deleteCustomer } = useAdminCustomers();
 
   if (loading) return <p className="text-muted-foreground text-sm">Chargement…</p>;
   if (customers.length === 0) {
@@ -196,6 +254,7 @@ export function CustomersTable() {
               onToggleStatus={() => toggleStatus(customer.id, !customer.disabledAt)}
               onConfirmEmail={() => confirmEmail(customer.id)}
               onActivatePro={(billingPeriod) => activatePro(customer.id, billingPeriod)}
+              onDelete={() => deleteCustomer(customer.id)}
             />
           ))}
         </tbody>
