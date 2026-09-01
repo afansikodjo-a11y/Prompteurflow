@@ -17,6 +17,12 @@ function translateAuthError(message: string): string {
  * depuis `?ref=`) via `options.data` — seul canal permettant à
  * `handle_new_user()` (trigger Postgres) de les lire ensuite via
  * `raw_user_meta_data`.
+ *
+ * `emailRedirectTo` fait passer le lien de confirmation par `/auth/callback`
+ * (même mécanisme que `resetPasswordForEmail`) : sans ça, cliquer sur le
+ * lien ne crée aucune session, et l'utilisateur doit retaper son mot de
+ * passe sur /login juste après avoir confirmé — étape redondante en trop
+ * dans le parcours d'inscription.
  */
 export async function signUp(
   email: string,
@@ -27,7 +33,11 @@ export async function signUp(
   const referralCode = getReferralCodeFromCookie();
   const data: Record<string, string> = { phone };
   if (referralCode) data.referral_code = referralCode;
-  const { error } = await supabase.auth.signUp({ email, password, options: { data } });
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data, emailRedirectTo: `${window.location.origin}/auth/callback?next=/studio` },
+  });
   return { error: error ? translateAuthError(error.message) : null };
 }
 
