@@ -129,8 +129,8 @@ function CustomerRow({ customer, onSavePhone, onToggleStatus, onConfirmEmail, on
       <td className="text-muted-foreground py-2 tabular-nums">
         {DATE_FORMATTER.format(new Date(customer.createdAt))}
       </td>
-      <td className="py-2 text-right">
-        <div className="flex justify-end gap-2">
+      <td className="max-w-70 py-2 text-right">
+        <div className="flex flex-wrap justify-end gap-2">
           {digitsOnly && (
             <Button asChild type="button" size="sm" variant="outline">
               <a href={buildWhatsAppLink(customer.phone ?? "", WHATSAPP_MESSAGE)} target="_blank" rel="noopener noreferrer">
