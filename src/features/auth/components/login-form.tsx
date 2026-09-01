@@ -8,7 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "../hooks/use-auth";
-import { wasQuickAccessOffered, getQuickAccessBlob } from "../lib/quick-access-storage";
+import {
+  getQuickAccessBlob,
+  markFirstLoginCompleted,
+  wasFirstLoginCompleted,
+  wasQuickAccessOffered,
+} from "../lib/quick-access-storage";
 import { QuickAccessSetupDialog } from "./quick-access-setup-dialog";
 
 /** Formulaire de connexion (email + mot de passe). */
@@ -36,7 +41,15 @@ export function LoginForm() {
       setError(error);
       return;
     }
-    // Proposé une seule fois par appareil, jamais si déjà configuré ou refusé.
+    // Jamais dès la toute première connexion réussie sur cet appareil (juste
+    // après une inscription, avant d'avoir rien vu de l'app) — seulement à
+    // partir de la suivante, et une seule fois, jamais si déjà configuré ou
+    // refusé.
+    if (!wasFirstLoginCompleted()) {
+      markFirstLoginCompleted();
+      goToStudio();
+      return;
+    }
     if (!wasQuickAccessOffered() && !getQuickAccessBlob()) {
       setShowQuickAccessOffer(true);
       return;

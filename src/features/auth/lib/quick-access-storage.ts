@@ -13,6 +13,7 @@ export interface QuickAccessBlob {
 const BLOB_KEY = "pf:quick-access";
 const FAILS_KEY = "pf:quick-access-fails";
 const OFFERED_KEY = "pf:quick-access-offered";
+const FIRST_LOGIN_KEY = "pf:first-login-done";
 
 /** `5` échecs consécutifs → le code est effacé, retour au mot de passe. */
 export const MAX_QUICK_ACCESS_ATTEMPTS = 5;
@@ -71,4 +72,20 @@ export function wasQuickAccessOffered(): boolean {
 export function markQuickAccessOffered(): void {
   if (!hasLocalStorage()) return;
   window.localStorage.setItem(OFFERED_KEY, "1");
+}
+
+/**
+ * A-t-on déjà réussi une connexion par mot de passe sur cet appareil ? Sert
+ * à ne jamais proposer l'accès rapide dès la toute première connexion (juste
+ * après une inscription, avant d'avoir vu l'app une seule fois) — seulement
+ * à partir de la suivante.
+ */
+export function wasFirstLoginCompleted(): boolean {
+  if (!hasLocalStorage()) return true;
+  return window.localStorage.getItem(FIRST_LOGIN_KEY) === "1";
+}
+
+export function markFirstLoginCompleted(): void {
+  if (!hasLocalStorage()) return;
+  window.localStorage.setItem(FIRST_LOGIN_KEY, "1");
 }
