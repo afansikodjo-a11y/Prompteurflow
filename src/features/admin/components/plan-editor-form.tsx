@@ -15,6 +15,23 @@ function parseLimit(value: string): number | null {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
+/**
+ * Durée max : éditée en minutes (plus lisible pour un admin qu'un compte de
+ * secondes), toujours stockée en secondes (`Plan.maxDurationSec`) — jamais
+ * une nouvelle unité en base, juste une conversion d'affichage.
+ */
+function parseDurationMinutes(value: string): number | null {
+  if (value.trim() === "") return null;
+  const minutes = Number.parseFloat(value);
+  if (!Number.isFinite(minutes) || minutes < 0) return null;
+  return Math.round(minutes * 60);
+}
+
+function secondsToMinutesInput(sec: number | null): string {
+  if (sec === null) return "";
+  return String(Math.round((sec / 60) * 100) / 100);
+}
+
 interface PlanCardProps {
   plan: Plan;
   onSave: (id: PlanId, patch: Partial<Plan>) => Promise<void>;
@@ -55,15 +72,16 @@ function PlanCard({ plan, onSave }: PlanCardProps) {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor={`duration-${plan.id}`}>Durée max (s) — vide = illimité</Label>
+          <Label htmlFor={`duration-${plan.id}`}>Durée max (min) — vide = illimité</Label>
           <Input
             id={`duration-${plan.id}`}
             type="number"
             min={0}
-            value={draft.maxDurationSec ?? ""}
+            step={0.5}
+            value={secondsToMinutesInput(draft.maxDurationSec)}
             onChange={(event) => {
               setSaved(false);
-              setDraft((current) => ({ ...current, maxDurationSec: parseLimit(event.target.value) }));
+              setDraft((current) => ({ ...current, maxDurationSec: parseDurationMinutes(event.target.value) }));
             }}
           />
         </div>
