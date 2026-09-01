@@ -58,7 +58,7 @@ export function MarketingHeader() {
               size="sm"
               className="bg-brand shadow-brand/20 hover:bg-brand-bright text-black shadow-lg"
             >
-              <Link href="/studio">Commencer gratuitement</Link>
+              <Link href="/signup">Créer un compte</Link>
             </Button>
           </div>
 
@@ -93,8 +93,8 @@ export function MarketingHeader() {
               Connexion
             </Link>
             <Button asChild className="bg-brand hover:bg-brand-bright mt-3 text-black">
-              <Link href="/studio" onClick={() => setMenuOpen(false)}>
-                Commencer gratuitement
+              <Link href="/signup" onClick={() => setMenuOpen(false)}>
+                Créer un compte
               </Link>
             </Button>
           </nav>
