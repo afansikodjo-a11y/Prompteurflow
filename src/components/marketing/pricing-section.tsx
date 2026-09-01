@@ -57,6 +57,14 @@ export function PricingSection({ plans }: PricingSectionProps) {
   // été choisi explicitement via le bouton en haut.
   const [upsellPlan, setUpsellPlan] = React.useState<Plan | null>(null);
   const hasAnnualOption = plans.some((plan) => plan.annualPriceXof !== null);
+  // Meilleure économie annuelle tous plans confondus, pour le rappel sous le
+  // toggle Mensuel/Annuel — jamais un pourcentage en dur, toujours dérivé des
+  // vrais prix (même logique que `planFeatureLines`).
+  const maxSavingsPercent = plans.reduce<number | null>((max, plan) => {
+    const savings = annualSavingsPercent(plan);
+    if (savings === null) return max;
+    return max === null ? savings : Math.max(max, savings);
+  }, null);
 
   const runCheckout = async (planId: Exclude<PlanId, "standard">, billingPeriod: BillingPeriod) => {
     setCheckoutError(null);
@@ -94,7 +102,7 @@ export function PricingSection({ plans }: PricingSectionProps) {
         </Reveal>
 
         {hasAnnualOption && (
-          <Reveal delay={0.05} className="mt-8 flex justify-center">
+          <Reveal delay={0.05} className="mt-8 flex flex-col items-center gap-3">
             <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
               <button
                 type="button"
@@ -119,6 +127,11 @@ export function PricingSection({ plans }: PricingSectionProps) {
                 Annuel
               </button>
             </div>
+            {period === "monthly" && maxSavingsPercent !== null && maxSavingsPercent > 0 && (
+              <p className="text-center text-sm text-neutral-400">
+                Économisez jusqu&apos;à {maxSavingsPercent}&nbsp;% avec le plan annuel
+              </p>
+            )}
           </Reveal>
         )}
 
