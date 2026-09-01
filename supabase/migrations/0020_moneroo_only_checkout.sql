@@ -1,0 +1,17 @@
+-- Retour à Moneroo comme fournisseur de paiement unique. Moneroo agrège
+-- déjà plusieurs processeurs (PayDunya, FedaPay) avec sa propre bascule
+-- interne en cas de panne de l'un d'eux — la couche multi-fournisseurs
+-- construite en amont (SasPay puis PayDunya en direct, cf. migrations
+-- 0018/0019) reconstruisait une redondance qui existait déjà nativement
+-- côté Moneroo. Retirée.
+--
+-- `payment_providers` n'a plus de raison d'être avec un fournisseur unique
+-- codé en dur (checkout/lib/moneroo.ts) : plus de sélection à faire, donc
+-- plus de configuration à stocker.
+--
+-- Les colonnes `provider`/`payment_reference`/`provider_event_id`
+-- (transactions/subscriptions/payment_events) restent en l'état : elles ne
+-- gênent en rien un fournisseur unique, et les revenir en arrière casserait
+-- l'historique déjà écrit avec ce schéma (dont les paiements SasPay/
+-- PayDunya de test). Pas de raison de le faire.
+drop table public.payment_providers;
