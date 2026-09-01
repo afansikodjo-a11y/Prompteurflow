@@ -57,7 +57,9 @@ import { RecordingsLibrary, useRecordings } from "@/features/recordings";
 import { parseScriptFile, ScriptsLibrary, UnsupportedFileTypeError, useScripts } from "@/features/scripts";
 import {
   AnnualSavingsChoice,
+  getAllPlans,
   getPlan,
+  PricingCards,
   PRO_PLAN_ID,
   startCheckout,
   useSubscription,
@@ -784,27 +786,33 @@ function StudioApp() {
  * anonyme, ou compte créé après la fin du plan gratuit et sans abonnement
  * actif (voir `useSubscription`). Un compte grandfathered (créé avant la
  * coupure) ne passe jamais par ici.
+ *
+ * Choix de formule affiché sur place (`PricingCards`, partagé avec la page
+ * tarifs) plutôt qu'un renvoi vers la landing marketing — évite l'aller-
+ * retour hors de l'app pour payer, chaque carte gère déjà elle-même le cas
+ * "pas connecté" (bouton Créer un compte) vs "connecté" (bouton S'abonner).
  */
 function StudioPaywall({ isAuthenticated }: { isAuthenticated: boolean }) {
+  const [plans, setPlans] = React.useState<Plan[] | null>(null);
+
+  React.useEffect(() => {
+    void getAllPlans().then((allPlans) => setPlans(allPlans.filter((plan) => plan.isActive)));
+  }, []);
+
   return (
-    <div className="bg-background flex h-[calc(100dvh-3.5rem)] flex-col items-center justify-center gap-4 px-4 text-center">
+    <div className="bg-background min-h-[calc(100dvh-3.5rem)] px-4 py-10 text-center">
       <h1 className="text-xl font-semibold">
         {isAuthenticated ? "Choisissez votre formule" : "Créez votre compte pour commencer"}
       </h1>
-      <p className="text-muted-foreground max-w-sm text-sm">
+      <p className="text-muted-foreground mx-auto mt-2 max-w-sm text-sm">
         {isAuthenticated
-          ? "Aucun abonnement actif sur ce compte. Choisissez la formule Découverte ou Pro pour utiliser le studio."
-          : "Le studio est réservé aux comptes abonnés — formule Découverte ou Pro, à partir de 2 500 XOF/mois."}
+          ? "Aucun abonnement actif sur ce compte — choisissez Découverte ou Pro pour utiliser le studio."
+          : "Le studio est réservé aux comptes abonnés. Créez un compte pour vous abonner."}
       </p>
-      <Button asChild>
-        <Link href={isAuthenticated ? "/#pricing" : "/signup"}>
-          {isAuthenticated ? "Voir les formules" : "Créer un compte"}
-        </Link>
-      </Button>
-      {!isAuthenticated && (
-        <Link href="/#pricing" className="text-brand-bright text-sm underline">
-          Voir les tarifs
-        </Link>
+      {plans === null ? (
+        <p className="text-muted-foreground mt-8 text-sm">Chargement…</p>
+      ) : (
+        <PricingCards plans={plans} />
       )}
     </div>
   );

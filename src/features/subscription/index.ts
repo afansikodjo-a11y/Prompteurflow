@@ -6,6 +6,7 @@ export { useSubscription, type UseSubscriptionResult } from "./hooks/use-subscri
 export { useMySubscriptionDetails, type MySubscriptionDetails, type MySubscriptionStatus } from "./hooks/use-my-subscription-details";
 export { MySubscriptionCard } from "./components/my-subscription-card";
 export { AnnualSavingsChoice } from "./components/annual-savings-choice";
+export { PricingCards } from "./components/pricing-cards";
 export { getAllPlans, getPlan, updatePlan } from "./lib/plans-db";
 export { startCheckout, type StartCheckoutResult } from "./lib/checkout-client";
 export { annualSavingsPercent } from "./lib/annual-savings";
