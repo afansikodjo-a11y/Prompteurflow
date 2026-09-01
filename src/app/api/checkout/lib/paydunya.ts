@@ -9,17 +9,22 @@ const PAYDUNYA_SANDBOX_API_URL = "https://app.paydunya.com/sandbox-api/v1/checko
 const REQUEST_TIMEOUT_MS = 30_000;
 
 /**
- * ⚠️ Corps de requête et enveloppe de réponse déduits de la doc publique et
- * du SDK officiel (developers.paydunya.com/doc/FR/http_json,
- * github.com/paydunyadev/paydunya-php) — pas encore vérifiés par un appel
- * réel avec de vraies clés (contrairement à `moneroo.ts`, et à `saspay.ts`
- * en son temps une fois corrigé). À confirmer dès les premières clés
- * `PAYDUNYA_*_KEY` disponibles, avant d'activer ce fournisseur dans
- * `payment_providers` (désactivé par défaut, voir migration 0019).
+ * Corps de requête et enveloppe de réponse vérifiés par un appel réel à
+ * l'API PayDunya (clés live, 2026-09-01) : `response_code`/`response_text`/
+ * `token` exactement conformes à la doc, page de paiement fonctionnelle.
+ * Erreur métier (ex. montant sous le minimum PayDunya) : HTTP 200 mais
+ * `response_code` différent de "00" — géré explicitement ci-dessous, ne
+ * jamais se fier au seul statut HTTP pour détecter un échec côté PayDunya.
  *
  * URL sandbox vs live choisie selon le préfixe de la clé privée
  * (`test_...`) — les deux environnements PayDunya utilisent des chemins
- * d'API distincts, contrairement à Moneroo/SasPay où seule la clé change.
+ * d'API distincts, contrairement à Moneroo où seule la clé change.
+ *
+ * `store.name` envoyé mais n'a pas suffi à afficher "PrompteurFlow" comme
+ * marchand sur la page de paiement (nom de l'entité enregistrée sur le
+ * compte PayDunya affiché à la place) — probablement un réglage du profil
+ * marchand côté dashboard PayDunya, pas quelque chose que cette requête
+ * peut forcer.
  */
 export async function initializePayment(input: InitializePaymentInput): Promise<InitializePaymentResult> {
   const masterKey = process.env.PAYDUNYA_MASTER_KEY;
@@ -49,7 +54,11 @@ export async function initializePayment(input: InitializePaymentInput): Promise<
           description: input.description,
           customer: { email: input.customerEmail },
         },
-        store: { name: siteConfig.name },
+        store: {
+          name: siteConfig.name,
+          website_url: siteConfig.url,
+          logo_url: `${appOrigin}/apple-icon.png`,
+        },
         actions: {
           return_url: input.returnUrl,
           cancel_url: input.returnUrl,

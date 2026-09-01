@@ -7,7 +7,7 @@ export const siteConfig = {
   shortName: "PrompteurFlow",
   description:
     "Téléprompteur + caméra : lisez votre script et filmez la vidéo en même temps, depuis un seul appareil.",
-  url: "https://prompteurflow.app",
+  url: "https://www.prompteurflow.com",
   locale: "fr",
   themeColor: {
     light: "#ffffff",
