@@ -111,7 +111,7 @@ function CustomerRow({ customer, onSavePhone, onToggleStatus, onConfirmEmail, on
           value={phoneDraft}
           onChange={(event) => setPhoneDraft(event.target.value)}
           onBlur={handlePhoneBlur}
-          placeholder="Ex. 22890000000"
+          placeholder="Ex. +22890000000"
           className="h-8 w-40"
         />
       </td>

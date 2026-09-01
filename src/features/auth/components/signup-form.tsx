@@ -68,7 +68,7 @@ export function SignupForm() {
           type="tel"
           required
           autoComplete="tel"
-          placeholder="Ex. 22890000000"
+          placeholder="Ex. +22890000000"
           value={phone}
           onChange={(event) => setPhone(event.target.value)}
           className="h-11"
