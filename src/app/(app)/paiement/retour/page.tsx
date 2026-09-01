@@ -31,7 +31,7 @@ function SupportWhatsAppLink() {
 }
 
 /**
- * Retour du fournisseur de paiement (SasPay ou Moneroo, voir
+ * Retour du fournisseur de paiement (PayDunya ou Moneroo, voir
  * `checkout/lib/providers.ts`) après paiement — jamais la source de vérité
  * (le webhook l'est), juste un retour rassurant pendant que le webhook
  * arrive. Vérifie simplement si l'abonnement le plus récent de

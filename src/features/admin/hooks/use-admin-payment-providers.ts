@@ -5,7 +5,7 @@ import * as React from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export interface AdminPaymentProviderRow {
-  id: "moneroo" | "saspay";
+  id: "moneroo" | "paydunya";
   enabled: boolean;
 }
 
@@ -15,7 +15,7 @@ export interface UseAdminPaymentProvidersResult {
   setEnabled: (id: AdminPaymentProviderRow["id"], enabled: boolean) => Promise<void>;
 }
 
-/** Gère l'activation des fournisseurs de paiement (SasPay/Moneroo) pour le panneau admin. */
+/** Gère l'activation des fournisseurs de paiement (PayDunya/Moneroo) pour le panneau admin. */
 export function useAdminPaymentProviders(): UseAdminPaymentProvidersResult {
   const [providers, setProviders] = React.useState<AdminPaymentProviderRow[]>([]);
   const [loading, setLoading] = React.useState(true);

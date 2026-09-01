@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useAdminPaymentProviders, type AdminPaymentProviderRow } from "../hooks/use-admin-payment-providers";
 
 const PROVIDER_LABELS: Record<AdminPaymentProviderRow["id"], string> = {
-  saspay: "SasPay",
+  paydunya: "PayDunya",
   moneroo: "Moneroo",
 };
 
@@ -42,7 +42,7 @@ function ProviderCard({ provider, onToggle }: ProviderCardProps) {
 
 /**
  * Formulaire admin d'activation des fournisseurs de paiement — l'ordre
- * d'essai (SasPay avant Moneroo) est fixe, pas éditable ici, seule
+ * d'essai (PayDunya avant Moneroo) est fixe, pas éditable ici, seule
  * l'activation/désactivation l'est (voir `providers.ts:PROVIDER_ORDER`).
  */
 export function PaymentProvidersForm() {

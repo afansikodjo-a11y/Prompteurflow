@@ -83,7 +83,7 @@ export async function POST(request: Request) {
 
   // Essaie chaque fournisseur actif dans l'ordre (PROVIDER_ORDER) jusqu'au
   // premier qui répond — une clé manquante/mal configurée ou une panne
-  // amont sur le fournisseur prioritaire (ex. SasPay) ne doit jamais
+  // amont sur le fournisseur prioritaire (ex. PayDunya) ne doit jamais
   // bloquer un client tant qu'un autre fournisseur actif (ex. Moneroo) peut
   // encore traiter le paiement. Erreur renvoyée au client seulement si tous
   // ont échoué.

@@ -3,8 +3,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import * as moneroo from "./moneroo";
+import * as paydunya from "./paydunya";
 import type { InitializePaymentInput, InitializePaymentResult, PaymentProviderId } from "./payment-provider";
-import * as saspay from "./saspay";
 
 /**
  * Ordre d'essai des fournisseurs — constante de code, pas une donnée admin
@@ -14,10 +14,10 @@ import * as saspay from "./saspay";
  * échoue (clé manquante, erreur réseau, panne amont...) — jamais d'erreur
  * affichée au client tant qu'il reste un fournisseur actif à essayer.
  */
-export const PROVIDER_ORDER: PaymentProviderId[] = ["saspay", "moneroo"];
+export const PROVIDER_ORDER: PaymentProviderId[] = ["paydunya", "moneroo"];
 
 const PROVIDERS: Record<PaymentProviderId, { initializePayment: (input: InitializePaymentInput) => Promise<InitializePaymentResult> }> = {
-  saspay,
+  paydunya,
   moneroo,
 };
 
