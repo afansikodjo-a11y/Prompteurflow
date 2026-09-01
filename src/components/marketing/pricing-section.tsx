@@ -128,8 +128,8 @@ export function PricingSection({ plans }: PricingSectionProps) {
               </button>
             </div>
             {period === "monthly" && maxSavingsPercent !== null && maxSavingsPercent > 0 && (
-              <p className="text-center text-sm text-neutral-400">
-                Économisez jusqu&apos;à {maxSavingsPercent}&nbsp;% avec le plan annuel
+              <p className="text-brand text-center text-sm font-medium">
+                Économisez jusqu&apos;à {maxSavingsPercent}&nbsp;% avec le plan annuel 💰
               </p>
             )}
           </Reveal>
