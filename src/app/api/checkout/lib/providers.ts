@@ -9,10 +9,10 @@ import * as saspay from "./saspay";
 /**
  * Ordre d'essai des fournisseurs — constante de code, pas une donnée admin
  * (seule l'activation/désactivation l'est, voir `payment_providers`/
- * `resolveActiveProvider`). Un seul fournisseur est tenté par paiement : le
- * premier de cette liste marqué actif en base. Pas de bascule automatique
- * vers le suivant si l'appel API échoue en cours de requête — seulement si
- * un fournisseur est explicitement désactivé.
+ * `resolveEnabledProviders`). `checkout/route.ts` parcourt cette liste dans
+ * l'ordre et retombe sur le suivant actif si l'appel API du précédent
+ * échoue (clé manquante, erreur réseau, panne amont...) — jamais d'erreur
+ * affichée au client tant qu'il reste un fournisseur actif à essayer.
  */
 export const PROVIDER_ORDER: PaymentProviderId[] = ["saspay", "moneroo"];
 
@@ -30,9 +30,9 @@ interface PaymentProviderRow {
   enabled: boolean;
 }
 
-/** Premier fournisseur de `PROVIDER_ORDER` marqué actif en base, ou `null` si aucun. */
-export async function resolveActiveProvider(supabase: SupabaseClient): Promise<PaymentProviderId | null> {
+/** Fournisseurs actifs en base, dans l'ordre de `PROVIDER_ORDER` (liste vide si aucun). */
+export async function resolveEnabledProviders(supabase: SupabaseClient): Promise<PaymentProviderId[]> {
   const { data } = await supabase.from("payment_providers").select("id, enabled");
   const enabledIds = new Set((data as PaymentProviderRow[] | null ?? []).filter((row) => row.enabled).map((row) => row.id));
-  return PROVIDER_ORDER.find((id) => enabledIds.has(id)) ?? null;
+  return PROVIDER_ORDER.filter((id) => enabledIds.has(id));
 }
