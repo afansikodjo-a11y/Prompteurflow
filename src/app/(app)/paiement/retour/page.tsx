@@ -31,11 +31,13 @@ function SupportWhatsAppLink() {
 }
 
 /**
- * Retour Moneroo après paiement — jamais la source de vérité (le webhook
- * l'est), juste un retour rassurant pendant que le webhook arrive. Vérifie
- * simplement si l'abonnement le plus récent de l'utilisateur est déjà actif,
- * explicitement annulé (paiement échoué/annulé côté Moneroo), ou toujours en
- * attente après le délai d'observation.
+ * Retour du fournisseur de paiement (SasPay ou Moneroo, voir
+ * `checkout/lib/providers.ts`) après paiement — jamais la source de vérité
+ * (le webhook l'est), juste un retour rassurant pendant que le webhook
+ * arrive. Vérifie simplement si l'abonnement le plus récent de
+ * l'utilisateur est déjà actif, explicitement annulé (paiement échoué/
+ * annulé côté fournisseur), ou toujours en attente après le délai
+ * d'observation.
  */
 export default function PaiementRetourPage() {
   const [status, setStatus] = React.useState<Status>("checking");
@@ -101,7 +103,7 @@ export default function PaiementRetourPage() {
           <Loader2 className="text-muted-foreground size-12 animate-spin" />
           <h1 className="text-2xl font-bold tracking-tight">Confirmation en cours</h1>
           <p className="text-muted-foreground text-sm">
-            Nous confirmons votre paiement avec Moneroo — ça ne prend généralement que quelques instants.
+            Nous confirmons votre paiement — ça ne prend généralement que quelques instants.
           </p>
         </>
       ) : status === "failed" ? (

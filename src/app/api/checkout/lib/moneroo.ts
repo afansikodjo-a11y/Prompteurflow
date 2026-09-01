@@ -1,30 +1,9 @@
 import "server-only";
 
+import { PaymentUpstreamError, type InitializePaymentInput, type InitializePaymentResult } from "./payment-provider";
+
 const MONEROO_API_URL = "https://api.moneroo.io/v1/payments/initialize";
 const REQUEST_TIMEOUT_MS = 30_000;
-
-export class MonerooUpstreamError extends Error {
-  readonly status?: number;
-
-  constructor(message: string, status?: number) {
-    super(message);
-    this.name = "MonerooUpstreamError";
-    this.status = status;
-  }
-}
-
-export interface InitializePaymentInput {
-  amountXof: number;
-  description: string;
-  customerEmail: string;
-  returnUrl: string;
-  metadata: Record<string, string>;
-}
-
-export interface InitializePaymentResult {
-  transactionId: string;
-  checkoutUrl: string;
-}
 
 /**
  * Dérive un prénom/nom pragmatique pour Moneroo (champs obligatoires) —
@@ -41,7 +20,7 @@ function customerNameFromEmail(email: string): { firstName: string; lastName: st
 export async function initializePayment(input: InitializePaymentInput): Promise<InitializePaymentResult> {
   const apiKey = process.env.MONEROO_SECRET_KEY;
   if (!apiKey) {
-    throw new MonerooUpstreamError("MONEROO_SECRET_KEY manquante côté serveur.");
+    throw new PaymentUpstreamError("MONEROO_SECRET_KEY manquante côté serveur.");
   }
 
   const { firstName, lastName } = customerNameFromEmail(input.customerEmail);
@@ -66,19 +45,19 @@ export async function initializePayment(input: InitializePaymentInput): Promise<
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch (error) {
-    throw new MonerooUpstreamError(error instanceof Error ? error.message : "Erreur réseau vers Moneroo.");
+    throw new PaymentUpstreamError(error instanceof Error ? error.message : "Erreur réseau vers Moneroo.");
   }
 
   if (!response.ok) {
     const bodyText = await response.text().catch(() => "");
-    throw new MonerooUpstreamError(`Moneroo a répondu ${response.status} : ${bodyText}`, response.status);
+    throw new PaymentUpstreamError(`Moneroo a répondu ${response.status} : ${bodyText}`, response.status);
   }
 
   const data = await response.json();
   const transactionId = data?.data?.id;
   const checkoutUrl = data?.data?.checkout_url;
   if (typeof transactionId !== "string" || typeof checkoutUrl !== "string") {
-    throw new MonerooUpstreamError("Réponse Moneroo inattendue (id/checkout_url manquants).");
+    throw new PaymentUpstreamError("Réponse Moneroo inattendue (id/checkout_url manquants).");
   }
 
   return { transactionId, checkoutUrl };
