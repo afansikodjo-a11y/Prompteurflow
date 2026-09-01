@@ -12,6 +12,7 @@ import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { useAuth } from "@/features/auth";
 import {
   AnnualSavingsChoice,
+  annualSavingsPercent,
   formatXof,
   planFeatureLines,
   PRO_PLAN_ID,
@@ -35,6 +36,8 @@ function resolvePrice(plan: Plan, period: BillingPeriod) {
     amount: useAnnual ? plan.annualPriceXof! : plan.priceXof,
     barred: useAnnual ? plan.annualPriceBarredXof : plan.priceBarredXof,
     suffix: useAnnual ? " / an" : " / mois",
+    /** Économie vs mensuel × 12 — affichée seulement sur la vue annuelle. */
+    savingsPercent: useAnnual ? annualSavingsPercent(plan) : null,
   };
 }
 
@@ -155,7 +158,17 @@ export function PricingSection({ plans }: PricingSectionProps) {
                           {formatXof(price.amount)}
                         </span>
                         {price.amount > 0 && <span className="text-sm text-neutral-500">{price.suffix}</span>}
+                        {price.savingsPercent !== null && price.savingsPercent > 0 && (
+                          <span className="bg-brand/15 text-brand-bright rounded-full px-2 py-0.5 text-xs font-medium">
+                            -{price.savingsPercent}&nbsp;%
+                          </span>
+                        )}
                       </p>
+                      {price.savingsPercent !== null && price.savingsPercent > 0 && (
+                        <p className="mt-1 text-xs text-neutral-500">
+                          Soit {formatXof(plan.priceXof * 12 - plan.annualPriceXof!)} d&apos;économie vs mensuel
+                        </p>
+                      )}
                     </div>
 
                     <ul className="flex flex-1 flex-col gap-2.5 text-sm text-neutral-300">

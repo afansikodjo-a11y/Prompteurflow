@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { annualSavingsPercent } from "../lib/annual-savings";
 import { formatXof } from "../lib/format-price";
 import type { BillingPeriod, Plan } from "../types";
 
@@ -23,7 +24,7 @@ export function AnnualSavingsChoice({ plan, pendingPeriod, onChoose }: AnnualSav
 
   const monthlyTotal = plan.priceXof * 12;
   const savings = monthlyTotal - plan.annualPriceXof;
-  const savingsPercent = monthlyTotal > 0 ? Math.round((savings / monthlyTotal) * 100) : 0;
+  const savingsPercent = annualSavingsPercent(plan) ?? 0;
 
   return (
     <div className="flex flex-col gap-3">
