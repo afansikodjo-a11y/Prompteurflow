@@ -6,14 +6,27 @@ const SASPAY_API_URL = "https://api.saspay.me/api/v1/checkout-sessions/";
 const REQUEST_TIMEOUT_MS = 30_000;
 
 /**
- * ⚠️ Champs du body/de la réponse déduits de la doc publique
- * (https://docs.saspay.me/api-reference/payments), pas d'une spec OpenAPI
- * (inaccessible, 404 sur /openapi.json) ni d'un appel réel — SasPay n'a
- * jamais été testé avec de vraies clés au moment d'écrire ceci. Forme REST
- * standard par analogie avec Moneroo. À vérifier/ajuster dès les premières
- * clés `sk_test_...` disponibles (voir aussi le seed `enabled = false` sur
- * `payment_providers` dans 0018 — ce fournisseur reste désactivé tant que
- * ça n'a pas été fait).
+ * Dérive un nom pragmatique pour SasPay (`customer_name` obligatoire) —
+ * aucun nom n'est collecté nulle part dans l'app aujourd'hui (signup =
+ * email + mot de passe seulement). Même raisonnement que
+ * `customerNameFromEmail` dans `moneroo.ts`, mais SasPay veut un nom unique
+ * plutôt que prénom/nom séparés.
+ */
+function customerNameFromEmail(email: string): string {
+  const localPart = email.split("@")[0] || "Client";
+  return localPart.charAt(0).toUpperCase() + localPart.slice(1);
+}
+
+/**
+ * Corps de requête et enveloppe de réponse vérifiés par un appel réel à
+ * l'API SasPay (clé `sk_test_...`, 2026-09-01) — pas seulement déduits de
+ * la doc publique, qui ne les précisait pas explicitement :
+ * - `customer_email`/`customer_name` à plat (pas `customer: {...}` imbriqué).
+ * - `return_url` (pas `redirect_url` — testé, silencieusement ignoré par
+ *   l'API sans erreur, mais jamais répercuté : le client ne serait jamais
+ *   redirigé vers l'app après paiement).
+ * - Réponse enveloppée dans `data` (`{ success, data: { id, checkout_url,
+ *   ... }, code }`), jamais à plat.
  */
 export async function initializePayment(input: InitializePaymentInput): Promise<InitializePaymentResult> {
   const apiKey = process.env.SASPAY_SECRET_KEY;
@@ -34,8 +47,9 @@ export async function initializePayment(input: InitializePaymentInput): Promise<
         amount: input.amountXof,
         currency: "XOF",
         description: input.description,
-        customer: { email: input.customerEmail },
-        redirect_url: input.returnUrl,
+        customer_email: input.customerEmail,
+        customer_name: customerNameFromEmail(input.customerEmail),
+        return_url: input.returnUrl,
         metadata: input.metadata,
       }),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -49,12 +63,9 @@ export async function initializePayment(input: InitializePaymentInput): Promise<
     throw new PaymentUpstreamError(`SasPay a répondu ${response.status} : ${bodyText}`, response.status);
   }
 
-  const data = await response.json();
-  // Repli sur `data.data.*` (forme enveloppée, comme Moneroo) si la forme à
-  // plat (`data.id`/`data.checkout_url`) ne matche pas — la doc ne tranche
-  // pas clairement laquelle des deux formes SasPay utilise réellement.
-  const transactionId = data?.id ?? data?.data?.id;
-  const checkoutUrl = data?.checkout_url ?? data?.data?.checkout_url;
+  const body = await response.json();
+  const transactionId = body?.data?.id;
+  const checkoutUrl = body?.data?.checkout_url;
   if (typeof transactionId !== "string" || typeof checkoutUrl !== "string") {
     throw new PaymentUpstreamError("Réponse SasPay inattendue (id/checkout_url manquants).");
   }
