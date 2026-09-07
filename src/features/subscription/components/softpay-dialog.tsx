@@ -207,8 +207,12 @@ export function SoftpayDialog({ plan, billingPeriod, onClose, onFallbackToHosted
                     required
                     value={phone}
                     onChange={(event) => setPhone(event.target.value)}
-                    placeholder={`Ex. ${country.dialCode}90000000`}
+                    placeholder="Ex. 90000000"
                   />
+                  {/* PayDunya attend le numéro national seul (sans indicatif pays) — un
+                      indicatif inclus fait échouer l'opération, vérifié en conditions
+                      réelles. */}
+                  <p className="text-muted-foreground text-xs">Sans l&apos;indicatif ({country.dialCode}).</p>
                 </div>
                 {operator.requiresOtp && (
                   <div className="flex flex-col gap-1.5">
