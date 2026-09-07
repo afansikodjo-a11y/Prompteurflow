@@ -6,13 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-import { SOFTPAY_OPERATOR_OPTIONS, type SoftpayOperatorOptionId } from "../constants/softpay-operators";
+import { SOFTPAY_COUNTRIES } from "../constants/softpay-operators";
 import { usePollSubscriptionStatus } from "../hooks/use-poll-subscription-status";
-import { startSoftpayCheckout } from "../lib/softpay-client";
+import { confirmWizallCheckout, startSoftpayCheckout } from "../lib/softpay-client";
 import type { BillingPeriod, Plan, PlanId } from "../types";
 
-type Step = "form" | "submitting" | "waiting";
+type Step = "form" | "submitting" | "wizall-code" | "wizall-confirming" | "waiting";
 
 interface SoftpayDialogProps {
   /** Plan concerné, ou `null` pour fermer le dialogue. */
@@ -29,11 +28,24 @@ interface SoftpayDialogProps {
  * ("Payer par un autre moyen"). La facture PayDunya reste valide même si le
  * softpay échoue (mauvais numéro...) : on reste sur le formulaire, jamais
  * besoin de repayer une facture pour réessayer.
+ *
+ * Wizall (Sénégal) est le seul opérateur du catalogue en deux étapes :
+ * `startSoftpayCheckout` renvoie `wizall_pending`, on affiche un champ pour
+ * le code reçu par SMS, puis `confirmWizallCheckout` — le crédit final vient
+ * du webhook existant dans les deux cas, jamais de ces appels eux-mêmes.
  */
 export function SoftpayDialog({ plan, billingPeriod, onClose, onFallbackToHosted }: SoftpayDialogProps) {
-  const [operator, setOperator] = React.useState<SoftpayOperatorOptionId>(SOFTPAY_OPERATOR_OPTIONS[0].id);
+  const [countryCode, setCountryCode] = React.useState(SOFTPAY_COUNTRIES[0].code);
+  const country = SOFTPAY_COUNTRIES.find((c) => c.code === countryCode) ?? SOFTPAY_COUNTRIES[0];
+  const [operatorId, setOperatorId] = React.useState(country.operators[0].id);
+  const operator = country.operators.find((o) => o.id === operatorId) ?? country.operators[0];
+
   const [fullName, setFullName] = React.useState("");
   const [phone, setPhone] = React.useState("");
+  const [otp, setOtp] = React.useState("");
+  const [wizallCode, setWizallCode] = React.useState("");
+  const [wizallTransactionId, setWizallTransactionId] = React.useState<string | null>(null);
+
   const [step, setStep] = React.useState<Step>("form");
   const [error, setError] = React.useState<string | null>(null);
   const pollStatus = usePollSubscriptionStatus(step === "waiting");
@@ -44,8 +56,18 @@ export function SoftpayDialog({ plan, billingPeriod, onClose, onFallbackToHosted
       setError(null);
       setFullName("");
       setPhone("");
+      setOtp("");
+      setWizallCode("");
+      setWizallTransactionId(null);
     }
   }, [plan]);
+
+  // Le pays change ⇒ l'opérateur sélectionné doit rester valide pour ce pays.
+  const handleCountryChange = (nextCode: string) => {
+    setCountryCode(nextCode);
+    const nextCountry = SOFTPAY_COUNTRIES.find((c) => c.code === nextCode);
+    if (nextCountry) setOperatorId(nextCountry.operators[0].id);
+  };
 
   React.useEffect(() => {
     if (pollStatus === "active") window.location.href = "/studio";
@@ -59,9 +81,10 @@ export function SoftpayDialog({ plan, billingPeriod, onClose, onFallbackToHosted
     const result = await startSoftpayCheckout({
       planId: plan.id as Exclude<PlanId, "standard">,
       billingPeriod,
-      operator,
+      operator: operatorId,
       fullName,
       phone: phone.replace(/\D/g, ""),
+      otp: operator.requiresOtp ? otp : undefined,
     });
     if (!result.ok) {
       setError(result.error);
@@ -72,10 +95,31 @@ export function SoftpayDialog({ plan, billingPeriod, onClose, onFallbackToHosted
       window.location.href = result.url;
       return;
     }
+    if (result.status === "wizall_pending") {
+      setWizallTransactionId(result.transactionId);
+      setStep("wizall-code");
+      return;
+    }
     setStep("waiting");
   };
 
-  const selectedOption = SOFTPAY_OPERATOR_OPTIONS.find((option) => option.id === operator);
+  const handleWizallConfirm = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!wizallTransactionId) return;
+    setStep("wizall-confirming");
+    setError(null);
+    const result = await confirmWizallCheckout({
+      transactionId: wizallTransactionId,
+      phone: phone.replace(/\D/g, ""),
+      authorizationCode: wizallCode,
+    });
+    if (!result.ok) {
+      setError(result.error);
+      setStep("wizall-code");
+      return;
+    }
+    setStep("waiting");
+  };
 
   return (
     <Dialog open={plan !== null} onOpenChange={(open) => !open && onClose()}>
@@ -99,22 +143,56 @@ export function SoftpayDialog({ plan, billingPeriod, onClose, onFallbackToHosted
                 )}
                 {pollStatus === "failed" && <p className="text-destructive text-xs">Le paiement a échoué ou a été annulé.</p>}
               </div>
+            ) : step === "wizall-code" || step === "wizall-confirming" ? (
+              <form onSubmit={(event) => void handleWizallConfirm(event)} className="flex flex-col gap-4">
+                <p className="text-muted-foreground text-sm">Entrez le code reçu par SMS pour valider le paiement Wizall.</p>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="wizall-code">Code reçu par SMS</Label>
+                  <Input
+                    id="wizall-code"
+                    required
+                    value={wizallCode}
+                    onChange={(event) => setWizallCode(event.target.value)}
+                  />
+                </div>
+                {error && <p className="text-destructive text-sm">{error}</p>}
+                <Button type="submit" disabled={step === "wizall-confirming"}>
+                  {step === "wizall-confirming" ? "Validation…" : "Valider"}
+                </Button>
+              </form>
             ) : (
               <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-4">
-                <div className="flex gap-2">
-                  {SOFTPAY_OPERATOR_OPTIONS.map((option) => (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => setOperator(option.id)}
-                      className={cn(
-                        "flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-                        operator === option.id ? "border-brand bg-brand/10" : "border-white/15 hover:bg-white/5",
-                      )}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="softpay-country">Pays</Label>
+                    <select
+                      id="softpay-country"
+                      value={countryCode}
+                      onChange={(event) => handleCountryChange(event.target.value)}
+                      className="border-input bg-transparent h-9 rounded-md border px-3 text-sm"
                     >
-                      {option.label}
-                    </button>
-                  ))}
+                      {SOFTPAY_COUNTRIES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="softpay-operator">Opérateur</Label>
+                    <select
+                      id="softpay-operator"
+                      value={operatorId}
+                      onChange={(event) => setOperatorId(event.target.value)}
+                      className="border-input bg-transparent h-9 rounded-md border px-3 text-sm"
+                    >
+                      {country.operators.map((o) => (
+                        <option key={o.id} value={o.id}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="softpay-name">Nom et prénom</Label>
@@ -128,9 +206,16 @@ export function SoftpayDialog({ plan, billingPeriod, onClose, onFallbackToHosted
                     required
                     value={phone}
                     onChange={(event) => setPhone(event.target.value)}
-                    placeholder={`Ex. ${selectedOption?.dialCode}90000000`}
+                    placeholder={`Ex. ${country.dialCode}90000000`}
                   />
                 </div>
+                {operator.requiresOtp && (
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="softpay-otp">Code de paiement</Label>
+                    <Input id="softpay-otp" required value={otp} onChange={(event) => setOtp(event.target.value)} />
+                    {operator.otpHint && <p className="text-muted-foreground text-xs">{operator.otpHint}</p>}
+                  </div>
+                )}
                 {error && <p className="text-destructive text-sm">{error}</p>}
                 <Button type="submit" disabled={step === "submitting"}>
                   {step === "submitting" ? "Envoi…" : "Payer"}

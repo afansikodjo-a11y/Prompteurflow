@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 import { initializePayment } from "../lib/paydunya";
-import { softpayCharge, SOFTPAY_OPERATORS, type SoftpayOperatorId } from "../lib/paydunya-softpay";
+import { softpayCharge, SOFTPAY_OPERATORS, wizallInitiate, WIZALL_OPERATOR_ID, type SoftpayOperatorId } from "../lib/paydunya-softpay";
 import { PaymentUpstreamError } from "../lib/payment-provider";
 
 export const runtime = "nodejs";
@@ -21,7 +21,7 @@ function errorResponse(status: number, error: string) {
 interface ValidatedBody {
   planId: "basic" | "pro";
   billingPeriod: BillingPeriod;
-  operator: SoftpayOperatorId;
+  operator: SoftpayOperatorId | typeof WIZALL_OPERATOR_ID;
   fullName: string;
   phone: string;
   otp?: string;
@@ -32,14 +32,16 @@ function validate(body: unknown): ValidatedBody | null {
   const record = body as Record<string, unknown>;
   if (record.planId !== "basic" && record.planId !== "pro") return null;
   if (record.billingPeriod !== "monthly" && record.billingPeriod !== "annual") return null;
-  if (typeof record.operator !== "string" || !(record.operator in SOFTPAY_OPERATORS)) return null;
+  if (typeof record.operator !== "string" || (!(record.operator in SOFTPAY_OPERATORS) && record.operator !== WIZALL_OPERATOR_ID)) {
+    return null;
+  }
   if (typeof record.fullName !== "string" || !record.fullName.trim()) return null;
   if (typeof record.phone !== "string" || !record.phone.trim()) return null;
   const otp = typeof record.otp === "string" && record.otp.trim() ? record.otp.trim() : undefined;
   return {
     planId: record.planId,
     billingPeriod: record.billingPeriod,
-    operator: record.operator as SoftpayOperatorId,
+    operator: record.operator as ValidatedBody["operator"],
     fullName: record.fullName.trim(),
     phone: record.phone.trim(),
     otp,
@@ -134,8 +136,27 @@ export async function POST(request: Request) {
     payment_reference: payment.transactionId,
   });
 
+  // Wizall (Sénégal) est le seul opérateur en deux appels du catalogue :
+  // celui-ci initie et renvoie un transactionId, la confirmation (code SMS)
+  // se fait ensuite via /api/checkout/softpay/wizall-confirm. La facture
+  // (transactions/subscriptions déjà insérées ci-dessus) est créditée par
+  // le webhook existant une fois PayDunya lui-même confirmé — cette route
+  // ne touche plus la base après ce point.
+  if (parsed.operator === WIZALL_OPERATOR_ID) {
+    const initiated = await wizallInitiate({
+      invoiceToken: payment.transactionId,
+      fullName: parsed.fullName,
+      email: user.email,
+      phone: parsed.phone,
+    });
+    if (initiated.status === "error" || !initiated.transactionId) {
+      return NextResponse.json({ status: "error", message: initiated.message }, { status: 400 });
+    }
+    return NextResponse.json({ status: "wizall_pending", transactionId: initiated.transactionId, message: initiated.message });
+  }
+
   const charge = await softpayCharge({
-    operator: parsed.operator,
+    operator: parsed.operator as SoftpayOperatorId,
     invoiceToken: payment.transactionId,
     fullName: parsed.fullName,
     email: user.email,
