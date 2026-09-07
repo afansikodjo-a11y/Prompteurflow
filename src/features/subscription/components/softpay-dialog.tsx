@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SOFTPAY_COUNTRIES } from "../constants/softpay-operators";
 import { usePollSubscriptionStatus } from "../hooks/use-poll-subscription-status";
 import { confirmWizallCheckout, startSoftpayCheckout } from "../lib/softpay-client";
@@ -165,33 +166,33 @@ export function SoftpayDialog({ plan, billingPeriod, onClose, onFallbackToHosted
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor="softpay-country">Pays</Label>
-                    <select
-                      id="softpay-country"
-                      value={countryCode}
-                      onChange={(event) => handleCountryChange(event.target.value)}
-                      className="border-input bg-transparent h-9 rounded-md border px-3 text-sm"
-                    >
-                      {SOFTPAY_COUNTRIES.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.label}
-                        </option>
-                      ))}
-                    </select>
+                    <Select value={countryCode} onValueChange={handleCountryChange}>
+                      <SelectTrigger id="softpay-country">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SOFTPAY_COUNTRIES.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>
+                            {c.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor="softpay-operator">Opérateur</Label>
-                    <select
-                      id="softpay-operator"
-                      value={operatorId}
-                      onChange={(event) => setOperatorId(event.target.value)}
-                      className="border-input bg-transparent h-9 rounded-md border px-3 text-sm"
-                    >
-                      {country.operators.map((o) => (
-                        <option key={o.id} value={o.id}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
+                    <Select value={operatorId} onValueChange={setOperatorId}>
+                      <SelectTrigger id="softpay-operator">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {country.operators.map((o) => (
+                          <SelectItem key={o.id} value={o.id}>
+                            {o.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div className="flex flex-col gap-1.5">
