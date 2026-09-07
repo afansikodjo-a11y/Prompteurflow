@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-import { initializePayment, MonerooUpstreamError } from "./lib/moneroo";
+import { PaymentUpstreamError, type InitializePaymentResult } from "./lib/payment-provider";
+import { getProvider, resolveEnabledProviders } from "./lib/providers";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -65,6 +66,12 @@ export async function POST(request: Request) {
     return errorResponse(400, "Palier annuel indisponible pour ce plan.");
   }
 
+  const enabledProviders = await resolveEnabledProviders(supabase);
+  if (enabledProviders.length === 0) {
+    console.error("Aucun fournisseur de paiement actif (payment_providers).");
+    return errorResponse(503, "Aucun moyen de paiement disponible actuellement — contactez le support.");
+  }
+
   // Dérivé de la requête elle-même plutôt que de NEXT_PUBLIC_APP_URL : une
   // variable d'environnement mal configurée/pas redéployée sur Vercel a
   // produit un return_url relatif ("/paiement/retour" au lieu d'une URL
@@ -74,25 +81,45 @@ export async function POST(request: Request) {
   const appUrl = new URL(request.url).origin;
   const periodLabel = parsed.billingPeriod === "annual" ? "annuel" : "mensuel";
 
-  let payment;
-  try {
-    payment = await initializePayment({
-      amountXof,
-      description: `Abonnement ${PLAN_NAMES[parsed.planId]} (${periodLabel}) — PrompteurFlow`,
-      customerEmail: user.email,
-      returnUrl: `${appUrl}/paiement/retour`,
-      metadata: { user_id: user.id, plan_id: parsed.planId, billing_period: parsed.billingPeriod },
-    });
-  } catch (error) {
-    if (error instanceof MonerooUpstreamError) {
-      if (error.status !== undefined && error.status >= 400 && error.status < 500) {
-        console.error("Erreur Moneroo (clé/requête) :", error.message);
-        return errorResponse(500, "Le paiement n'a pas pu être initialisé. Réessayez plus tard.");
-      }
-      console.error("Erreur Moneroo (upstream) :", error.message);
-      return errorResponse(error.status !== undefined ? 502 : 503, "Le service de paiement est momentanément indisponible. Réessayez dans quelques instants.");
+  // Essaie chaque fournisseur actif dans l'ordre (PROVIDER_ORDER) jusqu'au
+  // premier qui répond — une clé manquante/mal configurée ou une panne
+  // amont sur le fournisseur prioritaire (ex. PayDunya) ne doit jamais
+  // bloquer un client tant qu'un autre fournisseur actif (ex. Moneroo) peut
+  // encore traiter le paiement. Erreur renvoyée au client seulement si tous
+  // ont échoué.
+  let providerId = enabledProviders[0];
+  let payment: InitializePaymentResult | undefined;
+  let lastError: unknown;
+
+  for (const candidateId of enabledProviders) {
+    try {
+      payment = await getProvider(candidateId).initializePayment({
+        amountXof,
+        description: `Abonnement ${PLAN_NAMES[parsed.planId]} (${periodLabel}) — PrompteurFlow`,
+        customerEmail: user.email,
+        returnUrl: `${appUrl}/paiement/retour`,
+        metadata: { user_id: user.id, plan_id: parsed.planId, billing_period: parsed.billingPeriod },
+      });
+      providerId = candidateId;
+      lastError = undefined;
+      break;
+    } catch (error) {
+      lastError = error;
+      const message = error instanceof PaymentUpstreamError ? error.message : String(error);
+      console.error(`Échec du fournisseur ${candidateId}, repli sur le suivant si disponible :`, message);
     }
-    console.error("Échec inattendu de l'appel Moneroo :", error);
+  }
+
+  if (!payment) {
+    if (lastError instanceof PaymentUpstreamError) {
+      const status = lastError.status;
+      return errorResponse(
+        status !== undefined && status < 500 ? 500 : status !== undefined ? 502 : 503,
+        status !== undefined && status < 500
+          ? "Le paiement n'a pas pu être initialisé. Réessayez plus tard."
+          : "Le service de paiement est momentanément indisponible. Réessayez dans quelques instants.",
+      );
+    }
     return errorResponse(503, "Le service de paiement est momentanément indisponible. Réessayez dans quelques instants.");
   }
 
@@ -105,7 +132,7 @@ export async function POST(request: Request) {
     plan_id: parsed.planId,
     amount_xof: amountXof,
     status: "pending",
-    provider: "moneroo",
+    provider: providerId,
     payment_reference: payment.transactionId,
   });
 
@@ -114,7 +141,7 @@ export async function POST(request: Request) {
     plan_id: parsed.planId,
     status: "pending",
     billing_period: parsed.billingPeriod,
-    provider: "moneroo",
+    provider: providerId,
     payment_reference: payment.transactionId,
   });
 

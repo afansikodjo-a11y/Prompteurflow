@@ -31,11 +31,13 @@ function SupportWhatsAppLink() {
 }
 
 /**
- * Retour Moneroo après paiement — jamais la source de vérité (le webhook
- * l'est), juste un retour rassurant pendant que le webhook arrive. Vérifie
- * simplement si l'abonnement le plus récent de l'utilisateur est déjà actif,
- * explicitement annulé (paiement échoué/annulé côté Moneroo), ou toujours en
- * attente après le délai d'observation.
+ * Retour du fournisseur de paiement (PayDunya ou Moneroo, voir
+ * `checkout/lib/providers.ts`) après paiement — jamais la source de vérité
+ * (le webhook l'est), juste un retour rassurant pendant que le webhook
+ * arrive. Vérifie simplement si l'abonnement le plus récent de
+ * l'utilisateur est déjà actif, explicitement annulé (paiement échoué/
+ * annulé côté fournisseur), ou toujours en attente après le délai
+ * d'observation.
  */
 export default function PaiementRetourPage() {
   const [status, setStatus] = React.useState<Status>("checking");
