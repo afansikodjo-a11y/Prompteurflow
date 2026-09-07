@@ -15,9 +15,10 @@ const REQUEST_TIMEOUT_MS = 30_000;
  * antérieure (payin + payout, Edossimé) — voir aussi le webhook.
  */
 const MODE = (process.env.PAYDUNYA_MODE ?? "live").toLowerCase() === "test" ? "test" : "live";
-const API_V1 = MODE === "test" ? `${BASE_URL}/sandbox-api/v1` : `${BASE_URL}/api/v1`;
+export const PAYDUNYA_API_V1 = MODE === "test" ? `${BASE_URL}/sandbox-api/v1` : `${BASE_URL}/api/v1`;
 
-function authHeaders(): HeadersInit {
+/** Exporté pour réutilisation par `paydunya-softpay.ts` — mêmes 4 clés pour tous les endpoints PayDunya. */
+export function paydunyaAuthHeaders(): HeadersInit {
   return {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -56,9 +57,9 @@ export async function initializePayment(input: InitializePaymentInput): Promise<
 
   let response: Response;
   try {
-    response = await fetch(`${API_V1}/checkout-invoice/create`, {
+    response = await fetch(`${PAYDUNYA_API_V1}/checkout-invoice/create`, {
       method: "POST",
-      headers: authHeaders(),
+      headers: paydunyaAuthHeaders(),
       body: JSON.stringify({
         invoice: {
           total_amount: Math.round(input.amountXof),
@@ -124,8 +125,8 @@ export async function confirmCheckoutInvoice(token: string): Promise<ConfirmedIn
 
   let response: Response;
   try {
-    response = await fetch(`${API_V1}/checkout-invoice/confirm/${token}`, {
-      headers: authHeaders(),
+    response = await fetch(`${PAYDUNYA_API_V1}/checkout-invoice/confirm/${token}`, {
+      headers: paydunyaAuthHeaders(),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch {

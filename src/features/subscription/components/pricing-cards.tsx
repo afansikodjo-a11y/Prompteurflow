@@ -11,12 +11,14 @@ import { cn } from "@/lib/utils";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { useAuth } from "@/features/auth";
 import { PRO_PLAN_ID } from "../constants";
+import { usePaymentProvidersAvailability } from "../hooks/use-payment-providers-availability";
 import { annualSavingsPercent } from "../lib/annual-savings";
 import { startCheckout } from "../lib/checkout-client";
 import { formatXof } from "../lib/format-price";
 import { planFeatureLines } from "../lib/plan-feature-lines";
 import type { BillingPeriod, Plan, PlanId } from "../types";
 import { AnnualSavingsChoice } from "./annual-savings-choice";
+import { SoftpayDialog } from "./softpay-dialog";
 
 const SUPPORT_MESSAGE = "Bonjour, je n'arrive pas à m'abonner sur PrompteurFlow, pouvez-vous m'aider ?";
 
@@ -48,6 +50,7 @@ interface PricingCardsProps {
  */
 export function PricingCards({ plans }: PricingCardsProps) {
   const { user } = useAuth();
+  const { paydunyaEnabled } = usePaymentProvidersAvailability();
   const [period, setPeriod] = React.useState<BillingPeriod>("monthly");
   const [loadingPlanId, setLoadingPlanId] = React.useState<PlanId | null>(null);
   const [pendingPeriod, setPendingPeriod] = React.useState<BillingPeriod | null>(null);
@@ -57,6 +60,11 @@ export function PricingCards({ plans }: PricingCardsProps) {
   // s'ouvre que si on payait au mois par défaut, jamais si l'annuel a déjà
   // été choisi explicitement via le bouton en haut.
   const [upsellPlan, setUpsellPlan] = React.useState<Plan | null>(null);
+  // Dialogue SoftPay (paiement Mobile Money sur place) en cours, ou `null` —
+  // proposé en priorité si PayDunya est actif, avec un repli explicite vers
+  // `runCheckout` (redirection classique) pour qui préfère payer autrement.
+  const [softpayPlan, setSoftpayPlan] = React.useState<Plan | null>(null);
+  const [softpayPeriod, setSoftpayPeriod] = React.useState<BillingPeriod>("monthly");
   const hasAnnualOption = plans.some((plan) => plan.annualPriceXof !== null);
   // Meilleure économie annuelle tous plans confondus, pour le rappel sous le
   // toggle Mensuel/Annuel — jamais un pourcentage en dur, toujours dérivé des
@@ -82,12 +90,25 @@ export function PricingCards({ plans }: PricingCardsProps) {
     window.location.href = result.checkoutUrl;
   };
 
+  // Point d'entrée commun une fois la période tranchée (choisie directement,
+  // ou via le popup d'économie annuelle) : SoftPay (paiement sur place) si
+  // PayDunya est actif, sinon la redirection classique inchangée.
+  const initiatePayment = (plan: Plan, billingPeriod: BillingPeriod) => {
+    if (paydunyaEnabled) {
+      setUpsellPlan(null);
+      setSoftpayPlan(plan);
+      setSoftpayPeriod(billingPeriod);
+      return;
+    }
+    void runCheckout(plan.id as Exclude<PlanId, "standard">, billingPeriod);
+  };
+
   const handleSubscribe = (plan: Plan) => {
     if (period === "monthly" && plan.annualPriceXof !== null) {
       setUpsellPlan(plan);
       return;
     }
-    void runCheckout(plan.id as Exclude<PlanId, "standard">, period);
+    initiatePayment(plan, period);
   };
 
   return (
@@ -238,12 +259,22 @@ export function PricingCards({ plans }: PricingCardsProps) {
               <AnnualSavingsChoice
                 plan={upsellPlan}
                 pendingPeriod={pendingPeriod}
-                onChoose={(chosenPeriod) => void runCheckout(upsellPlan.id as Exclude<PlanId, "standard">, chosenPeriod)}
+                onChoose={(chosenPeriod) => initiatePayment(upsellPlan, chosenPeriod)}
               />
             </>
           )}
         </DialogContent>
       </Dialog>
+
+      <SoftpayDialog
+        plan={softpayPlan}
+        billingPeriod={softpayPeriod}
+        onClose={() => setSoftpayPlan(null)}
+        onFallbackToHosted={(plan) => {
+          setSoftpayPlan(null);
+          void runCheckout(plan.id as Exclude<PlanId, "standard">, softpayPeriod);
+        }}
+      />
     </>
   );
 }

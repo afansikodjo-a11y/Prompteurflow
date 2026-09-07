@@ -3,6 +3,7 @@
  * Standard retiré de la vente, gardé en base pour l'historique).
  */
 export { useSubscription, type UseSubscriptionResult } from "./hooks/use-subscription";
+export { usePollSubscriptionStatus, type PollSubscriptionStatus } from "./hooks/use-poll-subscription-status";
 export { useMySubscriptionDetails, type MySubscriptionDetails, type MySubscriptionStatus } from "./hooks/use-my-subscription-details";
 export { MySubscriptionCard } from "./components/my-subscription-card";
 export { AnnualSavingsChoice } from "./components/annual-savings-choice";

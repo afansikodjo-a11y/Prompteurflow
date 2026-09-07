@@ -1,18 +1,12 @@
 "use client";
 
-import * as React from "react";
 import Link from "next/link";
 import { CheckCircle2, Loader2, MessageCircle, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
-import { createClient } from "@/lib/supabase/client";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
-
-const POLL_INTERVAL_MS = 3000;
-const MAX_POLLS = 10; // ~30s
-
-type Status = "checking" | "active" | "failed" | "timeout";
+import { usePollSubscriptionStatus } from "@/features/subscription";
 
 const SUPPORT_MESSAGE = "Bonjour, mon paiement PrompteurFlow n'a pas abouti, pouvez-vous m'aider ?";
 
@@ -34,58 +28,11 @@ function SupportWhatsAppLink() {
  * Retour du fournisseur de paiement (PayDunya ou Moneroo, voir
  * `checkout/lib/providers.ts`) après paiement — jamais la source de vérité
  * (le webhook l'est), juste un retour rassurant pendant que le webhook
- * arrive. Vérifie simplement si l'abonnement le plus récent de
- * l'utilisateur est déjà actif, explicitement annulé (paiement échoué/
- * annulé côté fournisseur), ou toujours en attente après le délai
- * d'observation.
+ * arrive. `usePollSubscriptionStatus` (partagé avec le dialogue SoftPay)
+ * fait l'interrogation elle-même.
  */
 export default function PaiementRetourPage() {
-  const [status, setStatus] = React.useState<Status>("checking");
-
-  React.useEffect(() => {
-    let cancelled = false;
-    let attempts = 0;
-
-    async function poll() {
-      const supabase = createClient();
-      const { data: auth } = await supabase.auth.getUser();
-      if (!auth.user) {
-        if (!cancelled) setStatus("timeout");
-        return;
-      }
-
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("status")
-        .eq("user_id", auth.user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (cancelled) return;
-
-      if (data?.status === "active") {
-        setStatus("active");
-        return;
-      }
-      if (data?.status === "canceled") {
-        setStatus("failed");
-        return;
-      }
-
-      attempts += 1;
-      if (attempts >= MAX_POLLS) {
-        setStatus("timeout");
-        return;
-      }
-      setTimeout(() => void poll(), POLL_INTERVAL_MS);
-    }
-
-    void poll();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const status = usePollSubscriptionStatus(true);
 
   return (
     <section className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-24 text-center">
